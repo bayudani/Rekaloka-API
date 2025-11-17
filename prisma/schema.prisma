@@ -1,7 +1,6 @@
-// Mendefinisikan koneksi ke database MySQL
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL") // Mengambil URL dari file .env
+  url      = env("DATABASE_URL") 
 }
 
 // Mendefinisikan Prisma Client (generator)
@@ -18,13 +17,12 @@ model User {
   username      String        @unique
   password      String // Ingat untuk di-hash!
   verification_code Int       
-  is_verify
+  is_verify         Boolean       @default(false) // Status verifikasi
   exp           Int           @default(0)
   createdAt     DateTime      @default(now())
   
   // Relasi: Satu user bisa punya banyak check-in dan prompt history
   checkIns      GameCheckin[]
-  // promptHistory PromptHistory[] // <-- DIHAPUS
   badges        Badge[]       // Relasi ke Badge
 }
 

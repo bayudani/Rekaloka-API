@@ -1,17 +1,19 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+import 'dotenv/config'; 
+import createError from 'http-errors';
+import express from 'express';
+import path from 'path';
+import cookieParser from 'cookie-parser';
+import logger from 'morgan';
+import { fileURLToPath } from 'url'; 
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+import authRoutes from './routes/authRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
+// import provinceRoutes from './routes/provinceRoutes.js';
 
-var app = express();
+const app = express();
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -19,8 +21,11 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+
+app.use('/api/auth', authRoutes);
+app.use('/api/ai', aiRoutes);
+// app.use('/api/provinces', provinceRoutes);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -35,7 +40,16 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  res.render('error');
+  // Kirim error sebagai JSON
+  res.json({
+    error: {
+      message: err.message,
+      status: err.status
+    }
+  });
 });
-
-module.exports = app;
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Server jalan di http://localhost:${PORT}`);
+});
+export default app; // Ganti ke export default
