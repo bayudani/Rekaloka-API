@@ -1,0 +1,88 @@
+// Mendefinisikan koneksi ke database MySQL
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL") // Mengambil URL dari file .env
+}
+
+// Mendefinisikan Prisma Client (generator)
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --- MODEL DATA UNTUK REKALOKA ---
+
+// Model untuk User
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  username      String        @unique
+  password      String // Ingat untuk di-hash!
+  verification_code Int       
+  is_verify
+  exp           Int           @default(0)
+  createdAt     DateTime      @default(now())
+  
+  // Relasi: Satu user bisa punya banyak check-in dan prompt history
+  checkIns      GameCheckin[]
+  // promptHistory PromptHistory[] // <-- DIHAPUS
+  badges        Badge[]       // Relasi ke Badge
+}
+
+// Model untuk Badge/Lencana
+model Badge {
+  id          String   @id @default(cuid())
+  name        String   // Misal: "Maestro Budaya"
+  description String
+  iconUrl     String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+// Model untuk Provinsi (Data Peta Interaktif)
+model Province {
+  id           String   @id @default(cuid())
+  name         String   @unique // Misal: "Jawa Barat"
+  description  String   @db.Text
+  backsoundUrl String?  // URL ke MP3 lagu daerah
+  
+  // Menyimpan data ikonik (rumah adat, tarian, dll) sebagai JSON
+  // Ini lebih fleksibel daripada bikin banyak tabel kecil
+  iconicInfoJson String? @db.Text 
+
+  // Relasi: Satu provinsi punya banyak cultural hotspot
+  hotspots     CulturalHotspot[]
+}
+
+// Model untuk Titik Budaya (Cultural Hotspots)
+model CulturalHotspot {
+  id          String   @id @default(cuid())
+  name        String
+  description String   @db.Text
+  latitude    Float
+  longitude   Float
+  type        String // Misal: "Candi", "Museum", "Rumah Adat"
+  
+  // Relasi: Hotspot ini milik provinsi mana
+  provinceId  String
+  province    Province @relation(fields: [provinceId], references: [id])
+  
+  // Relasi: Banyak check-in bisa terjadi di satu hotspot
+  checkIns    GameCheckin[]
+}
+
+// Model untuk Game Check-in (Fitur Game Adaptif)
+model GameCheckin {
+  id          String   @id @default(cuid())
+  imageUrl    String   // URL foto bukti check-in
+  isValidated Boolean  @default(false) // Status validasi dari AI Image Recognition
+  timestamp   DateTime @default(now())
+  
+  // Relasi: Check-in ini dilakukan oleh siapa
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  // Relasi: Check-in ini di hotspot mana
+  hotspotId   String
+  hotspot     CulturalHotspot @relation(fields: [hotspotId], references: [id])
+}
