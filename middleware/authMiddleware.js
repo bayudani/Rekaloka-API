@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET;
 
 /**
@@ -6,21 +6,21 @@ const JWT_SECRET = process.env.JWT_SECRET;
  */
 export const verifyToken = (req, res, next) => {
   // Ambil token dari header Authorization
-  const authHeader = req.headers['authorization'];
+  const authHeader = req.headers["authorization"];
 
   // Token formatnya: "Bearer <token>"
-  const token = authHeader && authHeader.split(' ')[1];
+  const token = authHeader && authHeader.split(" ")[1];
 
   if (token == null) {
     // Kalo gak ada token, kita tolak
-    return res.status(401).json({ error: 'Akses ditolak. Token tidak ada.' });
+    return res.status(401).json({ error: "Akses ditolak. Token tidak ada." });
   }
 
   // Verifikasi tokennya
   jwt.verify(token, JWT_SECRET, (err, userPayload) => {
     if (err) {
       // Kalo tokennya salah/expired, kita tolak
-      return res.status(403).json({ error: 'Token tidak valid.' });
+      return res.status(403).json({ error: "Token tidak valid." });
     }
 
     // Kalo token bener, kita simpan data user (dari payload token)
@@ -33,9 +33,9 @@ export const verifyToken = (req, res, next) => {
 
 export const verifyAdmin = (req, res, next) => {
   // Cek apakah role di token adalah 'ADMIN'
-  if (req.user && req.user.role === 'admin') {
-    next(); 
+  if (req.user && req.user.role === "ADMIN") {
+    next();
   } else {
-    return res.status(403).json({ error: 'forbidden!' });
+    return res.status(403).json({ error: "forbidden!" });
   }
 };
