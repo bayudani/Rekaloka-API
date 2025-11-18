@@ -61,3 +61,30 @@ export const getUserExpAndLevel = async (userId) => {
         },
     });
 };
+
+export const getTopUsers = async (limit = 10) => {
+    return await prisma.user.findMany({
+        take: limit,
+        orderBy: [
+            { level: 'desc' }, // Prioritas 1: Level Tertinggi
+            { exp: 'desc' }    // Prioritas 2: EXP Tertinggi
+        ],
+        select: {
+            id: true,
+            username: true,
+            level: true,
+            exp: true,
+            // Kita tampilin badge utamanya juga biar keren
+            badges: {
+                take: 3, // Ambil 3 badge teratas
+                select: {
+                    name: true,
+                    iconUrl: true
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            }
+        }
+    });
+};

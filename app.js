@@ -13,6 +13,7 @@ import hotspotRoutes from './routes/hostpotRoutes.js';
 import gameRoutes from './routes/gameRoutes.js';
 import badgeRoutes from './routes/badgeRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import leaderboardRoutes from './routes/leaderboardRoutes.js';
 
 
 const app = express();
@@ -35,6 +36,7 @@ app.use('/api/hotspots', hotspotRoutes);
 app.use('/api/game', gameRoutes);
 app.use('/api/badges', badgeRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
 
 
 // catch 404 and forward to error handler

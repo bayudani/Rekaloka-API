@@ -41,11 +41,28 @@ export const register = async (req, res) => {
 
     // 5. Kirim respon
     res.status(201).json({
-      message: 'Registrasi berhasil. Cek email lo buat kode verifikasi.',
+      message: 'Registrasi berhasil. Cek email buat kode verifikasi.',
       userId: user.id
     });
 
   } catch (error) {
+    //  HANDLE ERROR DUPLIKASI PRISMA (P2002) ---
+    if (error.code === 'P2002') {
+      //  "target"-nya apa yang duplikat (kolom mana yang nabrak)
+      const target = error.meta?.target;
+      
+      // 1. Kalo targetnya Username (User_username_key)
+      if (target === 'User_username_key' || (Array.isArray(target) && target.includes('username'))) {
+        return res.status(409).json({ error: 'Username udah dipake orang lain' });
+      }
+      // 2. Kalo targetnya Email (Jaga-jaga kalo lolos dari cek manual di atas)
+      if (target === 'User_email_key' || (Array.isArray(target) && target.includes('email'))) {
+        return res.status(409).json({ error: 'Email udah terdaftar. Coba login aja.' });
+      }
+      // Default kalo bingung mana yang duplikat
+      return res.status(409).json({ error: 'Username atau Email udah ada yang make.' });
+    }
+
     console.error('Error registrasi:', error);
     res.status(500).json({ error: 'Registrasi gagal, coba lagi nanti' });
   }
