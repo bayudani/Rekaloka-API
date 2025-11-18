@@ -7,12 +7,10 @@ import {
     deleteProvinceById
 } from '../controllers/provinceController.js';
 
-// Impor middleware JWT
-import { verifyToken } from '../middleware/authMiddleware.js';
+import { verifyToken, verifyAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Base path: /api/v1/provinces
 
 // === Rute Publik (GET) ===
 // Siapapun boleh liat data provinsi
@@ -21,8 +19,8 @@ router.get('/:id', getProvinceById);
 
 // === Rute Terproteksi (POST, PUT, DELETE) ===
 // Cuma user yang udah login (dan punya token) yang boleh
-router.post('/', verifyToken, createNewProvince);
-router.put('/:id', verifyToken, updateProvinceById);
-router.delete('/:id', verifyToken, deleteProvinceById);
+router.post('/', verifyToken, verifyAdmin, createNewProvince);
+router.put('/:id', verifyToken,verifyAdmin, updateProvinceById);
+router.delete('/:id', verifyToken,verifyAdmin, deleteProvinceById);
 
 export default router;

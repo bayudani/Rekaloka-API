@@ -26,13 +26,13 @@
 * **Auth:** `jsonwebtoken` (JWT), `bcrypt`
 * **Email:** `nodemailer`
 * **AI Engine:**
-  * Google Gemini 2.5 Flash (Vision/Image Analysis)
+  * Google Gemini 1.5 Flash (Vision/Image Analysis)
   * Google Imagen 4.0 (Image Generation)
 * **Storage:** Cloudinary (Upload gambar gratis & kenceng)
 * **Utils:** `geo.js` (Haversine Formula buat jarak GPS)
 
 
-## Dokumentasi API Lengkap (v1)
+## 📖 Dokumentasi API Lengkap (v1)
 
 Base URL: `http://localhost:3001/api/v1`
 
@@ -76,6 +76,23 @@ Membuat provinsi baru dengan aset visual.
 }
 ```
 
+#### `PUT /:id` (Admin/Protected)
+
+Update data provinsi. Kirim field yang mau diubah saja.
+
+**Body JSON (Contoh ganti deskripsi & logo):**
+
+```
+{
+  "description": "Update deskripsi baru...",
+  "logoBase64": "data:image/png;base64,iVBORw0KGgo..." // Kalau field ini dikirim, logo lama bakal keganti
+}
+```
+
+#### `DELETE /:id` (Admin/Protected)
+
+Hapus data provinsi.
+
 ### 📍 3. Cultural Hotspots (`/hotspots`)
 
 Titik lokasi fisik (Candi, Museum, Warung) yang ada di peta.
@@ -83,6 +100,10 @@ Titik lokasi fisik (Candi, Museum, Warung) yang ada di peta.
 #### `GET /by-province/:provinceId`
 
 Mengambil semua hotspot di provinsi tertentu.
+
+#### `GET /:id`
+
+Mengambil detail satu hotspot.
 
 #### `POST /` (Admin/Protected)
 
@@ -101,6 +122,23 @@ Menambah lokasi baru beserta fotonya.
   "imageBase64": "data:image/jpeg;base64,/9j/4AAQSk..." // <-- Foto Lokasi
 }
 ```
+
+#### `PUT /:id` (Admin/Protected)
+
+Update data hotspot. Kirim field yang mau diubah saja.
+
+**Body JSON (Contoh ganti foto & nama):**
+
+```
+{
+  "name": "Gedung Sate (Renovasi)",
+  "imageBase64": "data:image/jpeg;base64,/9j/4AAQSk..." // Foto baru akan diupload ke Cloudinary
+}
+```
+
+#### `DELETE /:id` (Admin/Protected)
+
+Hapus data hotspot.
 
 ### 🎮 4. Game LBS & Check-in (`/game`)
 
@@ -171,7 +209,31 @@ Membuat gambar 2D dari teks prompt (Google Imagen).
 **Body:**
 
 ```
-{ "prompt": "Rumah Gadang futuristik" }
+{ "prompt": "Rumah Gadang futuristik style cyberpunk" }
+```
+
+### ☁️ 7. General Upload (`/upload`)
+
+Upload gambar umum (misal buat ikon Tarian, Makanan, dll) ke Cloudinary.
+
+#### `POST /` (User/Protected)
+
+**Body JSON:**
+
+```
+{
+  "imageBase64": "data:image/png;base64,iVBOR...",
+  "folder": "rekaloka_general" // (Opsional)
+}
+```
+
+**Response:**
+
+```
+{
+  "message": "Upload berhasil",
+  "url": "[https://res.cloudinary.com/](https://res.cloudinary.com/)..." // Gunakan URL ini di JSON Provinsi
+}
 ```
 
 ## 💡 Catatan Buat Frontend (Flutter)
@@ -183,7 +245,6 @@ Membuat gambar 2D dari teks prompt (Google Imagen).
 2. **Iconic Info (JSON):**
    * Data `iconicInfoJson` dari API Province itu bentuknya  **String** .
    * Jangan lupa di-`JSON.parse()` (atau `jsonDecode` di Dart) biar jadi Object/Map yang bisa dibaca.
+   * Gunakan endpoint `/upload` dulu buat dapetin URL gambar tarian/makanan, baru masukin URL-nya ke sini.
 3. **Cloudinary:**
    * Semua gambar (Logo, Background, Bukti Check-in) sekarang di-host di Cloudinary. URL-nya aman dan HTTPS.
-
-**Happy Coding, Tim Rekaloka! Let's win this! 🏆🔥**

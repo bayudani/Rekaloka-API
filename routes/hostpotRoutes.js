@@ -8,12 +8,10 @@ import {
     deleteHotspotById
 } from '../controllers/hotspotController.js';
 
-// Impor middleware JWT
-import { verifyToken } from '../middleware/authMiddleware.js';
+import { verifyToken, verifyAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Base path: /api/v1/hotspots
 
 // === Rute Publik (GET) ===
 // Siapapun boleh liat data hotspot
@@ -23,8 +21,8 @@ router.get('/by-province/:provinceId', getHotspotsByProvince); // Penting buat n
 
 // === Rute Terproteksi (POST, PUT, DELETE) ===
 // Cuma user yang udah login (dan punya token) yang boleh
-router.post('/', verifyToken, createNewHotspot);
-router.put('/:id', verifyToken, updateHotspotById);
-router.delete('/:id', verifyToken, deleteHotspotById);
+router.post('/', verifyToken,verifyAdmin, createNewHotspot);
+router.put('/:id', verifyToken,verifyAdmin, updateHotspotById);
+router.delete('/:id', verifyToken,verifyAdmin, deleteHotspotById);
 
 export default router;

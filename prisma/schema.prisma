@@ -3,12 +3,10 @@ datasource db {
   url      = env("DATABASE_URL") 
 }
 
-// Mendefinisikan Prisma Client (generator)
 generator client {
   provider = "prisma-client-js"
 }
 
-// --- MODEL DATA UNTUK REKALOKA ---
 
 // Model untuk User
 model User {
@@ -16,6 +14,7 @@ model User {
   email         String        @unique
   username      String        @unique
   password      String // Ingat untuk di-hash!
+  role           String       @default("user")
   verification_code Int?       
   is_verify         Boolean       @default(false) // Status verifikasi
   exp           Int           @default(0)

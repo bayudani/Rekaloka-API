@@ -42,7 +42,12 @@ export const findUserForLogin = async (email) => {
 // get profile user
 export const getUserProfile = async (userId) => {
     return await prisma.user.findUnique({
+        // hanya ambil field tertentu
         where: { id: userId },
+        select: {
+            email: true,
+            username: true,
+        },
     });
 };
 

@@ -12,6 +12,9 @@ import provinceRoutes from './routes/provinceRoutes.js';
 import hotspotRoutes from './routes/hostpotRoutes.js';
 import gameRoutes from './routes/gameRoutes.js';
 import badgeRoutes from './routes/badgeRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
+
+
 const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -31,6 +34,7 @@ app.use('/api/provinces', provinceRoutes);
 app.use('/api/hotspots', hotspotRoutes);
 app.use('/api/game', gameRoutes);
 app.use('/api/badges', badgeRoutes);
+app.use('/api/upload', uploadRoutes);
 
 
 // catch 404 and forward to error handler
