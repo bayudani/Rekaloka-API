@@ -60,9 +60,13 @@ app.use(function(err, req, res, next) {
     }
   });
 });
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server jalan di http://localhost:${PORT}`);
-});
+
+
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 3001;
+  app.listen(PORT, () => {
+    console.log(`Server jalan di http://localhost:${PORT}`);
+  });
+}
 
 export default app; // Ganti ke export default
