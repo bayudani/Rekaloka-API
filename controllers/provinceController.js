@@ -1,4 +1,3 @@
-// Impor dari model
 import {
     findAllProvinces,
     findProvinceById,
@@ -6,13 +5,12 @@ import {
     updateProvince,
     deleteProvince
 } from '../models/provinceModels.js';
+import { uploadToCloudinary } from '../services/uploader.service.js'; // Import uploader
 
 // GET /api/v1/provinces
 export const getProvinces = async (req, res) => {
     try {
-        // 1. Panggil Model
         const provinces = await findAllProvinces();
-        // 2. Kirim Respon
         res.json(provinces);
     } catch (error) {
         res.status(500).json({ error: 'Gagal mengambil data provinsi', details: error.message });
@@ -23,42 +21,53 @@ export const getProvinces = async (req, res) => {
 export const getProvinceById = async (req, res) => {
     const { id } = req.params;
     try {
-        // 1. Panggil Model
         const province = await findProvinceById(id);
 
-        // 2. Logic di Controller
         if (!province) {
             return res.status(404).json({ error: 'Provinsi tidak ditemukan' });
         }
 
-        // 3. Kirim Respon
         res.json(province);
     } catch (error) {
         res.status(500).json({ error: 'Gagal mengambil detail provinsi', details: error.message });
     }
 };
 
-// --- CRUD BARU MULAI DARI SINI ---
-
 // POST /api/v1/provinces
 export const createNewProvince = async (req, res) => {
-    const { name, description, backsoundUrl, iconicInfoJson } = req.body;
+    const {
+        name, description, backsoundUrl, iconicInfoJson,
+        logoBase64, backgroundBase64 // <-- Terima Base64 dari Body
+    } = req.body;
 
-    // Validasi simpel
     if (!name || !description) {
         return res.status(400).json({ error: 'Nama dan deskripsi provinsi tidak boleh kosong' });
     }
 
     try {
+        // Upload Logo (jika ada)
+        let logoUrl = null;
+        if (logoBase64) {
+            logoUrl = await uploadToCloudinary(logoBase64, 'rekaloka_provinces/logos');
+        }
+
+        // Upload Background (jika ada)
+        let backgroundUrl = null;
+        if (backgroundBase64) {
+            backgroundUrl = await uploadToCloudinary(backgroundBase64, 'rekaloka_provinces/backgrounds');
+        }
+
         const newProvince = await createProvince({
             name,
             description,
             backsoundUrl,
-            iconicInfoJson
+            iconicInfoJson,
+            logoUrl,        // Simpan URL Cloudinary
+            backgroundUrl   // Simpan URL Cloudinary
         });
+
         res.status(201).json({ message: 'Provinsi baru berhasil dibuat', data: newProvince });
     } catch (error) {
-        // Kalo nama provinsinya udah ada
         if (error.code === 'P2002') {
             return res.status(409).json({ error: 'Nama provinsi sudah ada' });
         }
@@ -70,13 +79,24 @@ export const createNewProvince = async (req, res) => {
 // PUT /api/v1/provinces/:id
 export const updateProvinceById = async (req, res) => {
     const { id } = req.params;
-    const data = req.body; // Ambil data baru dari body
+    const { logoBase64, backgroundBase64, ...otherData } = req.body; // Pisahin base64
 
     try {
-        const updatedProvince = await updateProvince(id, data);
+        const updateData = { ...otherData };
+
+        // Cek kalo user mau ganti logo
+        if (logoBase64) {
+            updateData.logoUrl = await uploadToCloudinary(logoBase64, 'rekaloka_provinces/logos');
+        }
+
+        // Cek kalo user mau ganti background
+        if (backgroundBase64) {
+            updateData.backgroundUrl = await uploadToCloudinary(backgroundBase64, 'rekaloka_provinces/backgrounds');
+        }
+
+        const updatedProvince = await updateProvince(id, updateData);
         res.status(200).json({ message: 'Provinsi berhasil di-update', data: updatedProvince });
     } catch (error) {
-        // Kalo provinsinya gak ketemu
         if (error.code === 'P2025') {
             return res.status(404).json({ error: 'Provinsi tidak ditemukan' });
         }
@@ -93,7 +113,6 @@ export const deleteProvinceById = async (req, res) => {
         await deleteProvince(id);
         res.status(200).json({ message: 'Provinsi berhasil dihapus' });
     } catch (error) {
-        // Kalo provinsinya gak ketemu
         if (error.code === 'P2025') {
             return res.status(404).json({ error: 'Provinsi tidak ditemukan' });
         }

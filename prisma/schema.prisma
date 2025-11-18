@@ -43,8 +43,9 @@ model Province {
   id           String   @id @default(cuid())
   name         String   @unique // Misal: "Jawa Barat"
   description  String   @db.Text
-  backsoundUrl String?  // URL ke MP3 lagu daerah
-  
+  backsoundUrl String?
+  logoUrl        String?
+  backgroundUrl  String?
   // Menyimpan data ikonik (rumah adat, tarian, dll) sebagai JSON
   // Ini lebih fleksibel daripada bikin banyak tabel kecil
   iconicInfoJson String? @db.Text 
@@ -61,7 +62,7 @@ model CulturalHotspot {
   latitude    Float
   longitude   Float
   type        String // Misal: "Candi", "Museum", "Rumah Adat"
-  
+  imageUrl    String?
   // Relasi: Hotspot ini milik provinsi mana
   provinceId  String
   province    Province @relation(fields: [provinceId], references: [id])

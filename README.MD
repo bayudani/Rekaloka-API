@@ -1,92 +1,189 @@
-## 📖 Dokumentasi API (Sementara)
 
-Semua *endpoint* ada di bawah  *base URL* : `/api/v1`
+## 🚀 Fitur Utama
 
-### 1. Auth (`/api/auth`)
+1. **Autentikasi Modern:**
+   * Register & Login aman (JWT + BCrypt).
+   * Verifikasi Email (OTP via Nodemailer).
+2. **Eksplorasi Peta Budaya (38 Provinsi):**
+   * Data detail tiap provinsi (Deskripsi, Logo, Background).
+   * Info budaya "abstrak" (Tari, Suku, Bahasa) via JSON.
+   * Info budaya "fisik" (Candi, Museum) via titik koordinat GPS.
+3. **Game Adaptif Lokasi (LBS):**
+   * **Check-in System:** Validasi User harus berada di radius < 100m dari lokasi.
+   * **AI Vision Validation:** Foto bukti check-in divalidasi otomatis oleh **Google Gemini** (Beneran foto Candi gak?).
+   * **Cloud Upload:** Bukti foto otomatis di-upload ke  **Cloudinary** .
+   * **Leveling System:** Dapet EXP tiap check-in, Level user naik otomatis.
+4. **Gamification (Badges):**
+   * Sistem **Badge Otomatis** (Trigger saat check-in).
+   * Contoh: *"Langkah Awal"* (First check-in), *"Warga Lokal"* (Level 5).
+5. **AI Text-to-Image:**
+   * Generate konsep gambar budaya 2D pake  **Google Imagen 4.0** .
 
-#### `POST /register`
+## 🛠️ Tech Stack & Tools
 
-Mendaftarkan user baru dan mengirim email verifikasi.
-*Body:* `{ "email": "...", "username": "...", "password": "..." }`
+* **Core:** Node.js, Express.js (ES Modules)
+* **Database:** MySQL (via Prisma ORM)
+* **Auth:** `jsonwebtoken` (JWT), `bcrypt`
+* **Email:** `nodemailer`
+* **AI Engine:**
+  * Google Gemini 2.5 Flash (Vision/Image Analysis)
+  * Google Imagen 4.0 (Image Generation)
+* **Storage:** Cloudinary (Upload gambar gratis & kenceng)
+* **Utils:** `geo.js` (Haversine Formula buat jarak GPS)
 
-#### `POST /verify`
 
-Memverifikasi akun user pake kode dari email.
-*Body:* `{ "email": "...", "code": 123456 }`
+## Dokumentasi API Lengkap (v1)
 
-#### `POST /login`
+Base URL: `http://localhost:3001/api/v1`
 
-Login dan dapet JWT Token.
-*Body:* `{ "email": "...", "password": "..." }`
+> **Note:** Semua endpoint yang butuh login wajib pake Header:
+> `Authorization: Bearer <token_jwt_lo>`
 
-### 2. AI (`/api/ai`)
+### 🔐 1. Auth (`/auth`)
 
-#### `POST /generate-image`
+| Method   | Endpoint      | Deskripsi                          | Body / Payload                                               |
+| -------- | ------------- | ---------------------------------- | ------------------------------------------------------------ |
+| `POST` | `/register` | Daftar user baru & kirim OTP email | `{ "email": "...", "username": "...", "password": "..." }` |
+| `POST` | `/verify`   | Verifikasi akun pake OTP           | `{ "email": "...", "code": 123456 }`                       |
+| `POST` | `/login`    | Masuk & dapet Token JWT            | `{ "email": "...", "password": "..." }`                    |
 
-Membuat gambar 2D dari *prompt* teks.
-**Header:** `Authorization: Bearer <token>`
-*Body:* `{ "prompt": "Candi Borobudur" }`
+### 🗺️ 2. Provinces (`/provinces`)
 
-### 3. Provinces (`/api/provinces`)
+Data provinsi buat Peta Interaktif.
 
 #### `GET /`
 
-Mengambil daftar semua provinsi.
+Mengambil semua data provinsi (buat list menu/peta utama).
 
 #### `GET /:id`
 
-Mengambil detail satu provinsi (termasuk info ikonik & list hotspot).
+Detail lengkap provinsi termasuk `hotspots` (titik lokasi) dan `iconicInfo` (budaya abstrak).
 
-#### `POST /` (Admin)
+#### `POST /` (Admin/Protected)
 
-Membuat data provinsi baru (termasuk data budaya abstrak di `iconicInfoJson`).
-**Header:** `Authorization: Bearer <token>`
+Membuat provinsi baru dengan aset visual.
 
-### 4. Cultural Hotspots (`/api/hotspots`)
-
-#### `GET /by-province/:provinceId`
-
-Mengambil semua hotspot di provinsi tertentu (buat nampilin pin di peta).
-
-#### `POST /` (Admin)
-
-Menambahkan titik lokasi budaya fisik (Museum, Candi, dll).
-**Header:** `Authorization: Bearer <token>`
-*Body:* `{ "name": "...", "latitude": -6.xxx, "longitude": 107.xxx, ... }`
-
-### 5. Game Adaptif Lokasi (`/api/game`) 
-
-Fitur ini ngecek apakah user beneran ada di lokasi DAN motret objek yang bener.
-
-#### `POST /check-in`
-
-Melakukan check-in, validasi lokasi, validasi foto, dan klaim EXP.
-
-**Header Wajib:** `Authorization: Bearer <token_dari_login>`
-
-**Body (JSON):**
+**Body JSON:**
 
 ```
 {
-  "hotspotId": "clx_id_candi_borobudur",   // ID tempat user mau check-in
-  "userLat": -7.6079,                       // Koordinat GPS User saat ini
-  "userLong": 110.2038,                     // Koordinat GPS User saat ini
-  "imageBase64": "/9j/4AAQSkZJRgABA..."    // Foto lokasi yang diambil user (Base64 string)
+  "name": "Jawa Barat",
+  "description": "Provinsi dengan kearifan lokal Sunda yang kental...",
+  "backsoundUrl": "[https://link-lagu-daerah.mp3](https://link-lagu-daerah.mp3)",
+  "iconicInfoJson": "{\"tarian\": [\"Jaipong\"], \"makanan\": [\"Batagor\"]}",
+  "logoBase64": "data:image/png;base64,iVBORw0KGgo...",       // <-- Upload Logo
+  "backgroundBase64": "data:image/jpeg;base64,/9j/4AAQSk..."  // <-- Upload Background
 }
 ```
 
-**Respon Sukses (200):**
+### 📍 3. Cultural Hotspots (`/hotspots`)
+
+Titik lokasi fisik (Candi, Museum, Warung) yang ada di peta.
+
+#### `GET /by-province/:provinceId`
+
+Mengambil semua hotspot di provinsi tertentu.
+
+#### `POST /` (Admin/Protected)
+
+Menambah lokasi baru beserta fotonya.
+
+**Body JSON:**
+
+```
+{
+  "name": "Gedung Sate",
+  "description": "Ikon kota Bandung...",
+  "type": "Monumen",
+  "latitude": -6.9022,
+  "longitude": 107.6186,
+  "provinceId": "clx_id_jawa_barat",
+  "imageBase64": "data:image/jpeg;base64,/9j/4AAQSk..." // <-- Foto Lokasi
+}
+```
+
+### 🎮 4. Game LBS & Check-in (`/game`)
+
+Fitur utama aplikasi! Validasi lokasi dan foto pake AI.
+
+#### `POST /check-in` (User/Protected)
+
+User melakukan check-in di lokasi.
+
+**Syarat:**
+
+1. Jarak GPS User < 100m dari lokasi Hotspot.
+2. Foto yang diupload valid (dikenali AI sebagai lokasi tersebut).
+
+**Body JSON:**
+
+```
+{
+  "hotspotId": "clx_id_gedung_sate", // ID tempat tujuan
+  "userLat": -6.90225,               // GPS User (harus deket)
+  "userLong": 107.61865,             // GPS User
+  "imageBase64": "/9j/4AAQSk..."     // Foto bukti (Base64 string)
+}
+```
+
+**Response Sukses (200):**
 
 ```
 {
   "message": "Check-in Berhasil! GGWP!",
   "reward": "+100 EXP",
-  "validation": "Lokasi & Foto Valid"
+  "validation": "Lokasi & Foto Valid",
+  "imageUrl": "[https://res.cloudinary.com/](https://res.cloudinary.com/)...", // URL bukti di cloud
+  "newBadge": "Lo dapet badge baru: Langkah Awal!" // (Opsional, jika dapet)
 }
 ```
 
-**Respon Gagal (400):**
+**Response Gagal (400):**
 
-* *"Kejauhan, bro! Lo berjarak 500m dari lokasi..."* (User bohong lokasi)
-* *"AI gagal mengenali tempat ini..."* (Foto buram/gelap/salah objek)
-* *"Lo udah pernah check-in di sini..."* (Spam check-in)
+* *"Kejauhan, bro!"* -> GPS kejauhan.
+* *"AI gagal mengenali tempat ini."* -> Foto buram/salah objek.
+
+### 🏆 5. Badges & Profil (`/badges`)
+
+#### `GET /my` (User/Protected)
+
+Mengambil daftar badge yang sudah didapatkan oleh user yang sedang login.
+
+**Response:**
+
+```
+[
+  {
+    "name": "Langkah Awal",
+    "description": "Check-in pertama kali.",
+    "iconUrl": "[https://cdn-icons-png.flaticon.com/](https://cdn-icons-png.flaticon.com/)...",
+    "createdAt": "2024-05-20T..."
+  }
+]
+```
+
+### 🤖 6. AI Generator (`/ai`)
+
+#### `POST /generate-image` (User/Protected)
+
+Membuat gambar 2D dari teks prompt (Google Imagen).
+
+**Body:**
+
+```
+{ "prompt": "Rumah Gadang futuristik" }
+```
+
+## 💡 Catatan Buat Frontend (Flutter)
+
+1. **Upload Gambar:**
+   * Gunakan library kompresi gambar sebelum convert ke Base64.
+   * Resolusi 800x600 atau 1024x768 udah cukup banget buat AI Gemini. Jangan kirim 4K (berat!).
+   * Format string base64 bisa mentah atau pakai prefix `data:image/jpg;base64,` (Backend nerima dua-duanya).
+2. **Iconic Info (JSON):**
+   * Data `iconicInfoJson` dari API Province itu bentuknya  **String** .
+   * Jangan lupa di-`JSON.parse()` (atau `jsonDecode` di Dart) biar jadi Object/Map yang bisa dibaca.
+3. **Cloudinary:**
+   * Semua gambar (Logo, Background, Bukti Check-in) sekarang di-host di Cloudinary. URL-nya aman dan HTTPS.
+
+**Happy Coding, Tim Rekaloka! Let's win this! 🏆🔥**

@@ -6,23 +6,34 @@ import {
     updateHotspot,
     deleteHotspot
 } from '../models/hotspotModels.js';
+import { uploadToCloudinary } from '../services/uploader.service.js'; // Import uploader
 
 // POST /api/v1/hotspots
 export const createNewHotspot = async (req, res) => {
-    const { name, description, latitude, longitude, type, provinceId } = req.body;
+    const {
+        name, description, latitude, longitude, type, provinceId,
+        imageBase64 // <-- Terima Base64 foto lokasi
+    } = req.body;
 
     if (!name || !latitude || !longitude || !type || !provinceId) {
         return res.status(400).json({ error: 'Data (name, lat, long, type, provinceId) tidak boleh kosong' });
     }
 
     try {
+        // Upload Foto Hotspot (jika ada)
+        let imageUrl = null;
+        if (imageBase64) {
+            imageUrl = await uploadToCloudinary(imageBase64, 'rekaloka_hotspots');
+        }
+
         const newHotspot = await createHotspot({
             name,
             description,
-            latitude: parseFloat(latitude), // Pastikan jadi angka
-            longitude: parseFloat(longitude), // Pastikan jadi angka
+            latitude: parseFloat(latitude),
+            longitude: parseFloat(longitude),
             type,
-            provinceId
+            provinceId,
+            imageUrl // Simpan URL Cloudinary
         });
         res.status(201).json({ message: 'Hotspot baru berhasil dibuat', data: newHotspot });
     } catch (error) {
@@ -69,9 +80,17 @@ export const getHotspotById = async (req, res) => {
 // PUT /api/v1/hotspots/:id
 export const updateHotspotById = async (req, res) => {
     const { id } = req.params;
-    const data = req.body;
+    const { imageBase64, ...otherData } = req.body; // Pisahin base64
+
     try {
-        const updatedHotspot = await updateHotspot(id, data);
+        const updateData = { ...otherData };
+
+        // Cek kalo user mau ganti foto
+        if (imageBase64) {
+            updateData.imageUrl = await uploadToCloudinary(imageBase64, 'rekaloka_hotspots');
+        }
+
+        const updatedHotspot = await updateHotspot(id, updateData);
         res.status(200).json({ message: 'Hotspot berhasil di-update', data: updatedHotspot });
     } catch (error) {
         if (error.code === 'P2025') {
