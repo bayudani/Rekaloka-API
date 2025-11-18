@@ -26,7 +26,7 @@ export const sendVerificationEmail = async (to, username, code) => {
         html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
         <h2>Halo, ${username}!</h2>
-        <p>Makasih udah daftar di Rekaloka. Ini kode verifikasi lo:</p>
+        <p>Terimakasih udah daftar di Rekaloka. Ini kode verifikasi anda:</p>
         <h1 style="font-size: 3rem; letter-spacing: 0.5rem; margin: 2rem 0; text-align: center;">
           ${code}
         </h1>

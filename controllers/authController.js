@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 // Impor dari helpers dan models
 import { sendVerificationEmail } from '../helpers/mailer.js';
 import { generateVerificationCode } from '../helpers/generator.js';
-import { createUser, findUserByEmail, verifyUser } from '../models/userModels.js';
+import { createUser, findUserByEmail, verifyUser, getUserProfile, getUserExpAndLevel } from '../models/userModels.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -20,7 +20,7 @@ export const register = async (req, res) => {
     // 1. Cek duplikasi (Panggil Model)
     const existingUser = await findUserByEmail(email);
     if (existingUser) {
-      return res.status(409).json({ error: 'Email atau username udah dipake' });
+      return res.status(409).json({ error: 'Email atau username sudah digunakan' });
     }
 
     // 2. Logic di Controller
@@ -103,7 +103,7 @@ export const login = async (req, res) => {
       return res.status(404).json({ error: 'Email atau password salah' });
     }
     if (!user.is_verify) {
-      return res.status(403).json({ error: 'Akun lo belum diverifikasi. Cek email!' });
+      return res.status(403).json({ error: 'Akun belum diverifikasi. Cek email!' });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -129,5 +129,36 @@ export const login = async (req, res) => {
   } catch (error) {
     console.error('Error login:', error);
     res.status(500).json({ error: 'Login gagal, coba lagi nanti' });
+  }
+};
+
+
+// get profile
+export const getProfile = async (req, res) => {
+  const userId = req.user.userId;
+  try {
+    const user = await getUserProfile(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User tidak ditemukan' });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error get profile:', error);
+    res.status(500).json({ error: 'Gagal mendapatkan profile' });
+  }
+};
+
+// get exp and level
+export const getExpAndLevel = async (req, res) => {
+  const userId = req.user.userId;
+  try {
+    const userStats = await getUserExpAndLevel(userId);
+    if (!userStats) {
+      return res.status(404).json({ error: 'User tidak ditemukan' });
+    }
+    res.status(200).json(userStats);
+  } catch (error) {
+    console.error('Error get exp and level:', error);
+    res.status(500).json({ error: 'Gagal mendapatkan exp and level' });
   }
 };

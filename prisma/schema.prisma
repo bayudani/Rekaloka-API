@@ -16,9 +16,10 @@ model User {
   email         String        @unique
   username      String        @unique
   password      String // Ingat untuk di-hash!
-  verification_code Int       
+  verification_code Int?       
   is_verify         Boolean       @default(false) // Status verifikasi
   exp           Int           @default(0)
+  level Int @default(1)
   createdAt     DateTime      @default(now())
   
   // Relasi: Satu user bisa punya banyak check-in dan prompt history

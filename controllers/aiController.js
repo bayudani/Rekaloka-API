@@ -4,10 +4,17 @@ import { getImageFromAI } from '../services/aiService.js';
 // POST /api/v1/ai/generate-image
 export const generateImage = async (req, res) => {
     const { prompt } = req.body;
-    // const { userId } = req.user; // <-- Nanti ambil dari JWT middleware, BUKAN body
+
+    // Ambil userId dari token yang udah di-decode sama middleware
+    const { userId } = req.user;
 
     if (!prompt) {
         return res.status(400).json({ error: 'Prompt tidak boleh kosong' });
+    }
+
+    if (!userId) {
+        // Ini cuma buat jaga-jaga kalo payload token-nya aneh
+        return res.status(403).json({ error: 'User ID tidak ditemukan di token.' });
     }
 
     try {

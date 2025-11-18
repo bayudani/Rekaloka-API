@@ -31,3 +31,28 @@ export const verifyUser = async (email) => {
         },
     });
 };
+
+// find user login
+export const findUserForLogin = async (email) => {
+    return await prisma.user.findUnique({
+        where: { email },
+    });
+};
+
+// get profile user
+export const getUserProfile = async (userId) => {
+    return await prisma.user.findUnique({
+        where: { id: userId },
+    });
+};
+
+// get exp and level
+export const getUserExpAndLevel = async (userId) => {
+    return await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+            exp: true,
+            level: true,
+        },
+    });
+};
