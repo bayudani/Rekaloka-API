@@ -46,8 +46,10 @@ model Province {
   logoUrl        String?
   backgroundUrl  String?
   // Menyimpan data ikonik (rumah adat, tarian, dll) sebagai JSON
-  // Ini lebih fleksibel daripada bikin banyak tabel kecil
   iconicInfoJson String? @db.Text 
+  
+  latitude       Float?            // Koordinat Ibu Kota Provinsi
+  longitude      Float?   
 
   // Relasi: Satu provinsi punya banyak cultural hotspot
   hotspots     CulturalHotspot[]

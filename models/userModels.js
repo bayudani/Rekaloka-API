@@ -88,3 +88,12 @@ export const getTopUsers = async (limit = 10) => {
         }
     });
 };
+
+
+// update user profile(username,dan password)
+export const updateUserProfile = async (userId, data) => {
+    return await prisma.user.update({
+        where: { id: userId },
+        data: data,
+    });
+};

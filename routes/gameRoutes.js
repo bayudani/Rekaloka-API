@@ -7,7 +7,7 @@ const router = express.Router();
 // Base path: /api/v1/game
 
 // POST /check-in
-// Wajib login (pake verifyToken)
 router.post('/check-in', verifyToken, checkInLocation);
+
 
 export default router;

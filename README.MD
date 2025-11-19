@@ -1,40 +1,76 @@
-
 ## 🚀 Fitur Utama
 
 1. **Autentikasi Modern:**
-   * Register & Login aman (JWT + BCrypt).
-   * Verifikasi Email (OTP via Nodemailer).
+   - Register & Login aman (JWT + BCrypt).
+   - Verifikasi Email (OTP via Nodemailer).
+   - Role-Based Access Control (USER vs ADMIN).
 2. **Eksplorasi Peta Budaya (38 Provinsi):**
-   * Data detail tiap provinsi (Deskripsi, Logo, Background).
-   * Info budaya "abstrak" (Tari, Suku, Bahasa) via JSON.
-   * Info budaya "fisik" (Candi, Museum) via titik koordinat GPS.
+   - Data detail tiap provinsi (Deskripsi, Logo, Background).
+   - **LBS (Location Based Service):** Sorting provinsi terdekat dari lokasi user.
+   - Info budaya "abstrak" (Tari, Suku, Bahasa) via JSON dinamis.
+   - Info budaya "fisik" (Candi, Museum) via titik koordinat GPS.
 3. **Game Adaptif Lokasi (LBS):**
-   * **Check-in System:** Validasi User harus berada di radius < 100m dari lokasi.
-   * **AI Vision Validation:** Foto bukti check-in divalidasi otomatis oleh **Google Gemini** (Beneran foto Candi gak?).
-   * **Cloud Upload:** Bukti foto otomatis di-upload ke  **Cloudinary** .
-   * **Leveling System:** Dapet EXP tiap check-in, Level user naik otomatis.
-4. **Gamification (Badges):**
-   * Sistem **Badge Otomatis** (Trigger saat check-in).
-   * Contoh: *"Langkah Awal"* (First check-in), *"Warga Lokal"* (Level 5).
+   - **Check-in System:** Validasi User harus berada di radius < 100m dari lokasi.
+   - **AI Vision Validation:** Foto bukti check-in divalidasi otomatis oleh **Google Gemini** (Beneran foto Candi gak?).
+   - **Cloud Upload:** Bukti foto otomatis di-upload ke **Cloudinary** .
+   - **Leveling System:** Dapet EXP tiap check-in, Level user naik otomatis.
+4. **Gamification (Badges & Leaderboard):**
+   - Sistem **Badge Otomatis** (Trigger saat check-in).
+   - **Leaderboard:** Liat siapa sepuh budaya paling niat se-Indonesia.
 5. **AI Text-to-Image:**
-   * Generate konsep gambar budaya 2D pake  **Google Imagen 4.0** .
+   - Generate konsep gambar budaya 2D pake **Google Imagen 4.0** .
 
 ## 🛠️ Tech Stack & Tools
 
-* **Core:** Node.js, Express.js (ES Modules)
-* **Database:** MySQL (via Prisma ORM)
-* **Auth:** `jsonwebtoken` (JWT), `bcrypt`
-* **Email:** `nodemailer`
-* **AI Engine:**
-  * Google Gemini 1.5 Flash (Vision/Image Analysis)
-  * Google Imagen 4.0 (Image Generation)
-* **Storage:** Cloudinary (Upload gambar gratis & kenceng)
-* **Utils:** `geo.js` (Haversine Formula buat jarak GPS)
+- **Core:** Node.js, Express.js (ES Modules)
+- **Database:** MySQL (via Prisma ORM)
+- **Auth:** `jsonwebtoken` (JWT), `bcrypt`
+- **Email:** `nodemailer`
+- **AI Engine:**
+  - Google Gemini 1.5 Flash (Vision/Image Analysis)
+  - Google Imagen 4.0 (Image Generation)
+- **Storage:** Cloudinary (Upload gambar gratis & kenceng)
+- **Caching:** Redis (via `ioredis`) buat performa ngebut.
+- **Utils:** `geo.js` (Haversine Formula buat jarak GPS).
 
+## 🏃 Cara Setup & Jalanin (Localhost)
 
-## 📖 Dokumentasi API Lengkap (v1)
+1. **Clone Repository:**
 
-Base URL: `http://localhost:3001/api/v1`
+   ```
+   git clone <repo_url>
+   cd rekaloka-backend
+   ```
+2. **Install Dependencies:**
+
+   ```
+   npm install
+   ```
+3. **Setup Environment Variables (`.env`):**
+   Buat file `.env` (copas dari `.env.example`). Isi data rahasia lo:
+
+   - `DATABASE_URL`: Koneksi MySQL.
+   - `GOOGLE_API_KEY`: API Key Google AI Studio.
+   - `CLOUDINARY_*`: Config Cloudinary.
+   - `REDIS_URL`: Koneksi Redis (Lokal/Cloud).
+   - `MAIL_*`: Config Nodemailer (Gmail App Password).
+4. **Database Migration (PENTING!):**
+   Bikin tabel di database lo otomatis.
+
+   ```
+   npx prisma migrate dev --name init
+   ```
+5. **Jalanin Server:**
+
+   ```
+   npm run dev
+   ```
+
+   Server jalan di: `http://localhost:3001`
+
+## 📖 Dokumentasi API Lengkap ()
+
+Base URL: `http://localhost:3001/api/`
 
 > **Note:** Semua endpoint yang butuh login wajib pake Header:
 > `Authorization: Bearer <token_jwt_lo>`
@@ -53,45 +89,46 @@ Data provinsi buat Peta Interaktif.
 
 #### `GET /`
 
-Mengambil semua data provinsi (buat list menu/peta utama).
+Mengambil semua data provinsi.
+
+- **Tanpa Query:** Urutan default database.
+- **LBS Mode:** `?lat=-6.2&long=106.8` (Urutkan berdasarkan jarak terdekat dari user).
 
 #### `GET /:id`
 
 Detail lengkap provinsi termasuk `hotspots` (titik lokasi) dan `iconicInfo` (budaya abstrak).
 
-#### `POST /` (Admin/Protected)
+#### `POST /` (Admin Only)
 
-Membuat provinsi baru dengan aset visual.
+Membuat provinsi baru.
 
 **Body JSON:**
 
 ```
 {
   "name": "Jawa Barat",
-  "description": "Provinsi dengan kearifan lokal Sunda yang kental...",
-  "backsoundUrl": "[https://link-lagu-daerah.mp3](https://link-lagu-daerah.mp3)",
+  "description": "Provinsi dengan kearifan lokal Sunda...",
+  "backsoundUrl": "[https://link-lagu.mp3](https://link-lagu.mp3)",
+  "latitude": -6.9175,
+  "longitude": 107.6191,
   "iconicInfoJson": "{\"tarian\": [\"Jaipong\"], \"makanan\": [\"Batagor\"]}",
-  "logoBase64": "data:image/png;base64,iVBORw0KGgo...",       // <-- Upload Logo
-  "backgroundBase64": "data:image/jpeg;base64,/9j/4AAQSk..."  // <-- Upload Background
+  "logoBase64": "data:image/png;base64,...",
+  "backgroundBase64": "data:image/jpeg;base64,..."
 }
 ```
 
-#### `PUT /:id` (Admin/Protected)
+#### `PUT /:id` (Admin Only)
 
-Update data provinsi. Kirim field yang mau diubah saja.
+Update data (Partial Update). Cukup kirim field yang mau diubah.
 
-**Body JSON (Contoh ganti deskripsi & logo):**
+**Body JSON:**
 
 ```
 {
   "description": "Update deskripsi baru...",
-  "logoBase64": "data:image/png;base64,iVBORw0KGgo..." // Kalau field ini dikirim, logo lama bakal keganti
+  "iconicInfoJson": { ... } // Backend otomatis merge sama data lama
 }
 ```
-
-#### `DELETE /:id` (Admin/Protected)
-
-Hapus data provinsi.
 
 ### 📍 3. Cultural Hotspots (`/hotspots`)
 
@@ -103,11 +140,11 @@ Mengambil semua hotspot di provinsi tertentu.
 
 #### `GET /:id`
 
-Mengambil detail satu hotspot.
+Detail satu hotspot.
 
-#### `POST /` (Admin/Protected)
+#### `POST /` (Admin Only)
 
-Menambah lokasi baru beserta fotonya.
+Menambah lokasi baru.
 
 **Body JSON:**
 
@@ -119,132 +156,88 @@ Menambah lokasi baru beserta fotonya.
   "latitude": -6.9022,
   "longitude": 107.6186,
   "provinceId": "clx_id_jawa_barat",
-  "imageBase64": "data:image/jpeg;base64,/9j/4AAQSk..." // <-- Foto Lokasi
+  "imageBase64": "data:image/jpeg;base64,..."
 }
 ```
-
-#### `PUT /:id` (Admin/Protected)
-
-Update data hotspot. Kirim field yang mau diubah saja.
-
-**Body JSON (Contoh ganti foto & nama):**
-
-```
-{
-  "name": "Gedung Sate (Renovasi)",
-  "imageBase64": "data:image/jpeg;base64,/9j/4AAQSk..." // Foto baru akan diupload ke Cloudinary
-}
-```
-
-#### `DELETE /:id` (Admin/Protected)
-
-Hapus data hotspot.
 
 ### 🎮 4. Game LBS & Check-in (`/game`)
 
 Fitur utama aplikasi! Validasi lokasi dan foto pake AI.
 
-#### `POST /check-in` (User/Protected)
+#### `POST /check-in` (User)
 
 User melakukan check-in di lokasi.
 
-**Syarat:**
-
-1. Jarak GPS User < 100m dari lokasi Hotspot.
-2. Foto yang diupload valid (dikenali AI sebagai lokasi tersebut).
+**Syarat:** Jarak GPS User < 100m & Foto Valid (AI).
 
 **Body JSON:**
 
 ```
 {
-  "hotspotId": "clx_id_gedung_sate", // ID tempat tujuan
-  "userLat": -6.90225,               // GPS User (harus deket)
-  "userLong": 107.61865,             // GPS User
-  "imageBase64": "/9j/4AAQSk..."     // Foto bukti (Base64 string)
+  "hotspotId": "clx_id_gedung_sate",
+  "userLat": -6.90225,
+  "userLong": 107.61865,
+  "imageBase64": "..." // Foto bukti
 }
 ```
 
-**Response Sukses (200):**
+**Response Sukses:**
 
 ```
 {
   "message": "Check-in Berhasil! GGWP!",
   "reward": "+100 EXP",
   "validation": "Lokasi & Foto Valid",
-  "imageUrl": "[https://res.cloudinary.com/](https://res.cloudinary.com/)...", // URL bukti di cloud
-  "newBadge": "Lo dapet badge baru: Langkah Awal!" // (Opsional, jika dapet)
+  "imageUrl": "[https://res.cloudinary.com/](https://res.cloudinary.com/)...",
+  "newBadge": "Lo dapet badge baru: Langkah Awal!" // (Optional)
 }
 ```
 
-**Response Gagal (400):**
+### 👤 5. Profile & History (`/profile`)
 
-* *"Kejauhan, bro!"* -> GPS kejauhan.
-* *"AI gagal mengenali tempat ini."* -> Foto buram/salah objek.
+#### `GET /history` (User)
 
-### 🏆 5. Badges & Profil (`/badges`)
+Mengambil riwayat check-in user (tempat-tempat yang udah dikunjungi).
 
-#### `GET /my` (User/Protected)
+### 🏆 6. Gamification (`/badges` & `/leaderboard`)
 
-Mengambil daftar badge yang sudah didapatkan oleh user yang sedang login.
+#### `GET /badges/my` (User)
 
-**Response:**
+Mengambil koleksi badge user yang sedang login.
 
-```
-[
-  {
-    "name": "Langkah Awal",
-    "description": "Check-in pertama kali.",
-    "iconUrl": "[https://cdn-icons-png.flaticon.com/](https://cdn-icons-png.flaticon.com/)...",
-    "createdAt": "2024-05-20T..."
-  }
-]
-```
+#### `GET /leaderboard` (User)
 
-### 🤖 6. AI Generator (`/ai`)
+Melihat Top Player berdasarkan Level dan EXP.
 
-#### `POST /generate-image` (User/Protected)
+- Query: `?limit=10` (Default 10 besar).
+
+### 🤖 7. AI Generator (`/ai`)
+
+#### `POST /generate-image` (User)
 
 Membuat gambar 2D dari teks prompt (Google Imagen).
 
-**Body:**
+**Body:** `{ "prompt": "Candi Borobudur k" }`
 
-```
-{ "prompt": "Rumah Gadang futuristik style cyberpunk" }
-```
+### ☁️ 8. General Upload (`/upload`)
 
-### ☁️ 7. General Upload (`/upload`)
+Upload gambar umum (misal buat ikon Tarian/Makanan buat ditaruh di JSON Province).
 
-Upload gambar umum (misal buat ikon Tarian, Makanan, dll) ke Cloudinary.
+#### `POST /` (User/Admin)
 
-#### `POST /` (User/Protected)
-
-**Body JSON:**
-
-```
-{
-  "imageBase64": "data:image/png;base64,iVBOR...",
-  "folder": "rekaloka_general" // (Opsional)
-}
-```
-
-**Response:**
-
-```
-{
-  "message": "Upload berhasil",
-  "url": "[https://res.cloudinary.com/](https://res.cloudinary.com/)..." // Gunakan URL ini di JSON Provinsi
-}
-```
+**Body:** `{ "imageBase64": "..." }`
+**Response:** `{ "url": "https://res.cloudinary.com/..." }`
 
 ## 💡 Catatan Buat Frontend (Flutter)
 
-1. **Upload Gambar:**
-   * Gunakan library kompresi gambar sebelum convert ke Base64.
-   * Resolusi 800x600 atau 1024x768 udah cukup banget buat AI Gemini. Jangan kirim 4K (berat!).
-   * Format string base64 bisa mentah atau pakai prefix `data:image/jpg;base64,` (Backend nerima dua-duanya).
-2. **Iconic Info (JSON):**
-   * Data `iconicInfoJson` dari API Province itu bentuknya  **String** .
-   * Jangan lupa di-`JSON.parse()` (atau `jsonDecode` di Dart) biar jadi Object/Map yang bisa dibaca.
-   * Gunakan endpoint `/upload` dulu buat dapetin URL gambar tarian/makanan, baru masukin URL-nya ke sini.
-3. **Cloudinary:**
-   * Semua gambar (Logo, Background, Bukti Check-in) sekarang di-host di Cloudinary. URL-nya aman dan HTTPS.
+1. **Format Gambar:**
+   - Gunakan library kompresi gambar sebelum convert ke Base64.
+   - Resolusi 800x600 atau 1024x768 udah cukup banget buat AI Gemini. Jangan kirim 4K (berat di kuota & server!).
+   - Format string base64 bisa mentah atau pakai prefix `data:image/jpg;base64,`.
+2. **Data JSON:**
+   - Data `iconicInfoJson` dari API Province itu bentuknya **String JSON** .
+   - Jangan lupa di-`JSON.parse()` (atau `jsonDecode` di Dart) biar jadi Object/Map yang bisa dibaca.
+3. **LBS Logic:**
+   - Kirim koordinat user saat ini ke endpoint `/provinces?lat=...&long=...` biar user dapet rekomendasi provinsi terdekat.
+
+**Happy Coding, Tim Rekaloka! Let's win this! 🏆🔥**

@@ -5,6 +5,7 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import logger from "morgan";
 import { fileURLToPath } from "url";
+import './services/redis.service.js';
 
 import authRoutes from "./routes/authRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
@@ -14,6 +15,7 @@ import gameRoutes from "./routes/gameRoutes.js";
 import badgeRoutes from "./routes/badgeRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
+import profile from "./routes/profileRoutes.js";
 
 const app = express();
 
@@ -39,6 +41,7 @@ app.use("/api/game", gameRoutes);
 app.use("/api/badges", badgeRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/api/profile", profile);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

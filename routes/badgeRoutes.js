@@ -9,6 +9,6 @@ const router = express.Router();
 router.get('/my', verifyToken, getMyBadges);
 
 // Ambil badge user lain (Bisa public atau proteksi, bebas)
-// router.get('/:userId', getUserBadges);
+router.get('/:userId', getUserBadges);
 
 export default router;

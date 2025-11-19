@@ -134,3 +134,5 @@ export const checkInLocation = async (req, res) => {
             .json({ error: "Gagal melakukan check-in", details: error.message });
     }
 };
+
+

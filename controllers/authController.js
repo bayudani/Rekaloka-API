@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 // Impor dari helpers dan models
 import { sendVerificationEmail } from '../helpers/mailer.js';
 import { generateVerificationCode } from '../helpers/generator.js';
-import { createUser, findUserByEmail, verifyUser, getUserProfile, getUserExpAndLevel } from '../models/userModels.js';
+import { createUser, findUserByEmail, verifyUser } from '../models/userModels.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -149,33 +149,3 @@ export const login = async (req, res) => {
   }
 };
 
-
-// get profile
-export const getProfile = async (req, res) => {
-  const userId = req.user.userId;
-  try {
-    const user = await getUserProfile(userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User tidak ditemukan' });
-    }
-    res.status(200).json(user);
-  } catch (error) {
-    console.error('Error get profile:', error);
-    res.status(500).json({ error: 'Gagal mendapatkan profile' });
-  }
-};
-
-// get exp and level
-export const getExpAndLevel = async (req, res) => {
-  const userId = req.user.userId;
-  try {
-    const userStats = await getUserExpAndLevel(userId);
-    if (!userStats) {
-      return res.status(404).json({ error: 'User tidak ditemukan' });
-    }
-    res.status(200).json(userStats);
-  } catch (error) {
-    console.error('Error get exp and level:', error);
-    res.status(500).json({ error: 'Gagal mendapatkan exp and level' });
-  }
-};

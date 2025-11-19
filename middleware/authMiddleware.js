@@ -33,7 +33,7 @@ export const verifyToken = (req, res, next) => {
 
 export const verifyAdmin = (req, res, next) => {
   // Cek apakah role di token adalah 'ADMIN'
-  if (req.user && req.user.role === "ADMIN") {
+  if (req.user && req.user.role === "admin") {
     next();
   } else {
     return res.status(403).json({ error: "forbidden!" });

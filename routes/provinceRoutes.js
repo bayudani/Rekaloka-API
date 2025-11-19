@@ -19,8 +19,8 @@ router.get('/:id', getProvinceById);
 
 // === Rute Terproteksi (POST, PUT, DELETE) ===
 // Cuma user yang udah login (dan punya token) yang boleh
-router.post('/', verifyToken, verifyAdmin, createNewProvince);
-router.put('/:id', verifyToken,verifyAdmin, updateProvinceById);
+router.post('/', verifyToken, createNewProvince);
+router.put('/:id', verifyToken, updateProvinceById);
 router.delete('/:id', verifyToken,verifyAdmin, deleteProvinceById);
 
 export default router;
