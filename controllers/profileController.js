@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { getUserProfile, getUserExpAndLevel } from '../models/UserModels.js';
+import { getUserProfile, getUserExpAndLevel } from '../models/userModels.js';
 const prisma = new PrismaClient();
 
 
