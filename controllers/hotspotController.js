@@ -6,15 +6,97 @@ import {
   updateHotspot,
   deleteHotspot
 } from '../models/hotspotModels.js';
+import { findProvinceById } from '../models/provinceModels.js'; 
+
 import { uploadToCloudinary } from '../services/uploader.service.js';
 import redis from '../services/redis.service.js';
+import { calculateDistance } from '../helpers/geo.js';
 
 // --- HELPERS KEY REDIS ---
 const KEY_ALL_HOTSPOTS = 'all_hotspots';
 const keyHotspotDetail = (id) => `hotspot:${id}`;
 const keyHotspotsByProvince = (provinceId) => `hotspots:province:${provinceId}`;
 
-// POST /api/v1/hotspots
+// GET /api/hotspots/nearby
+export const getNearbyHotspots = async (req, res) => {
+  const { lat, long, radius } = req.query;
+
+  if (!lat || !long) {
+    return res.status(400).json({ error: 'Wajib kirim parameter lat dan long' });
+  }
+
+  try {
+    const userLat = parseFloat(lat);
+    const userLong = parseFloat(long);
+    const searchRadius = radius ? parseFloat(radius) * 1000 : 10000; // Default 10 KM
+
+    // Cek validitas float
+    if (isNaN(userLat) || isNaN(userLong)) {
+        return res.status(400).json({ error: 'Format lat/long salah. Jangan pakai tanda kurung {}' });
+    }
+
+    let hotspotsData = [];
+
+    const cachedData = await redis.get(KEY_ALL_HOTSPOTS);
+    if (cachedData) {
+      hotspotsData = JSON.parse(cachedData);
+    } else {
+      hotspotsData = await findAllHotspots();
+      await redis.set(KEY_ALL_HOTSPOTS, JSON.stringify(hotspotsData), 'EX', 3600);
+    }
+
+    const nearbyHotspots = hotspotsData
+      .map(spot => {
+        if (!spot.latitude || !spot.longitude) return null;
+        const dist = calculateDistance(userLat, userLong, spot.latitude, spot.longitude);
+        return { ...spot, distance: Math.round(dist) }; 
+      })
+      .filter(spot => spot !== null && spot.distance <= searchRadius) 
+      .sort((a, b) => a.distance - b.distance); 
+
+    res.status(200).json({
+      message: `Ditemukan ${nearbyHotspots.length} lokasi di sekitar kamu`,
+      radius_km: searchRadius / 1000,
+      data: nearbyHotspots
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: 'Gagal mencari lokasi sekitar', details: error.message });
+  }
+};
+
+// GET /api/hotspots/by-province/:provinceId
+export const getHotspotsByProvince = async (req, res) => {
+  const { provinceId } = req.params;
+  const cacheKey = keyHotspotsByProvince(provinceId);
+
+  try {
+    // 1. Cek Cache Dulu (Kalo ada langsung return)
+    const cachedData = await redis.get(cacheKey);
+    if (cachedData) {
+      return res.json(JSON.parse(cachedData));
+    }
+
+    // 2. [FIX] Validasi: Cek apakah Provinsinya beneran ada di DB?
+    const provinceExists = await findProvinceById(provinceId);
+    if (!provinceExists) {
+        // Kalo ID Provinsinya ngawur/gak ketemu, langsung return 404
+        return res.status(404).json({ error: 'Provinsi tidak ditemukan. ID Provinsi salah.' });
+    }
+
+    // 3. Ambil Hotspot dari DB (Kalo provinsi valid)
+    const hotspots = await findHotspotsByProvinceId(provinceId);
+    
+    // Simpen Redis (walaupun kosong array-nya tetep di-cache biar ga nanya DB mulu)
+    await redis.set(cacheKey, JSON.stringify(hotspots), 'EX', 3600);
+
+    res.status(200).json(hotspots);
+  } catch (error) {
+    res.status(500).json({ error: 'Gagal mengambil data hotspot', details: error.message });
+  }
+};
+
+// POST /api/hotspots
 export const createNewHotspot = async (req, res) => {
   const { 
     name, description, latitude, longitude, type, provinceId, 
@@ -26,7 +108,12 @@ export const createNewHotspot = async (req, res) => {
   }
 
   try {
-    // Upload Foto Hotspot (jika ada)
+    // Validasi ID Provinsi pas create juga penting
+    const provinceExists = await findProvinceById(provinceId);
+    if (!provinceExists) {
+        return res.status(404).json({ error: 'ID Provinsi tidak valid/tidak ditemukan' });
+    }
+
     let imageUrl = null;
     if (imageBase64) {
       imageUrl = await uploadToCloudinary(imageBase64, 'rekaloka_hotspots');
@@ -39,13 +126,10 @@ export const createNewHotspot = async (req, res) => {
       longitude: parseFloat(longitude),
       type,
       provinceId,
-      imageUrl // Simpan URL Cloudinary
+      imageUrl 
     });
 
-    // --- HAPUS CACHE (INVALIDATION) ---
-    // 1. List semua hotspot basi -> hapus
     await redis.del(KEY_ALL_HOTSPOTS);
-    // 2. List hotspot di provinsi ini juga berubah -> hapus
     await redis.del(keyHotspotsByProvince(provinceId));
 
     res.status(201).json({ message: 'Hotspot baru berhasil dibuat', data: newHotspot });
@@ -55,19 +139,15 @@ export const createNewHotspot = async (req, res) => {
   }
 };
 
-// GET /api/v1/hotspots
+// GET /api/hotspots (Ambil Semua)
 export const getAllHotspots = async (req, res) => {
   try {
-    // 1. CEK CACHE
     const cachedData = await redis.get(KEY_ALL_HOTSPOTS);
     if (cachedData) {
       return res.json(JSON.parse(cachedData));
     }
 
-    // 2. AMBIL DB
     const hotspots = await findAllHotspots();
-
-    // 3. SIMPEN REDIS (TTL 1 jam)
     await redis.set(KEY_ALL_HOTSPOTS, JSON.stringify(hotspots), 'EX', 3600);
 
     res.status(200).json(hotspots);
@@ -76,84 +156,49 @@ export const getAllHotspots = async (req, res) => {
   }
 };
 
-// GET /api/v1/hotspots/by-province/:provinceId
-export const getHotspotsByProvince = async (req, res) => {
-  const { provinceId } = req.params;
-  const cacheKey = keyHotspotsByProvince(provinceId);
-
-  try {
-    // 1. CEK CACHE PER PROVINSI
-    const cachedData = await redis.get(cacheKey);
-    if (cachedData) {
-      return res.json(JSON.parse(cachedData));
-    }
-
-    // 2. AMBIL DB
-    const hotspots = await findHotspotsByProvinceId(provinceId);
-
-    // 3. SIMPEN REDIS (TTL 1 jam)
-    await redis.set(cacheKey, JSON.stringify(hotspots), 'EX', 3600);
-
-    res.status(200).json(hotspots);
-  } catch (error) {
-    res.status(500).json({ error: 'Gagal mengambil data hotspot', details: error.message });
-  }
-};
-
-// GET /api/v1/hotspots/:id
+// GET /api/hotspots/:id
 export const getHotspotById = async (req, res) => {
   const { id } = req.params;
   const cacheKey = keyHotspotDetail(id);
 
   try {
-    // 1. CEK CACHE DETAIL
     const cachedData = await redis.get(cacheKey);
     if (cachedData) {
       return res.json(JSON.parse(cachedData));
     }
 
-    // 2. AMBIL DB
     const hotspot = await findHotspotById(id);
     if (!hotspot) {
       return res.status(404).json({ error: 'Hotspot tidak ditemukan' });
     }
 
-    // 3. SIMPEN REDIS (TTL 1 jam)
     await redis.set(cacheKey, JSON.stringify(hotspot), 'EX', 3600);
-
     res.status(200).json(hotspot);
   } catch (error) {
     res.status(500).json({ error: 'Gagal mengambil data hotspot', details: error.message });
   }
 };
 
-// PUT /api/v1/hotspots/:id
+// PUT /api/hotspots/:id
 export const updateHotspotById = async (req, res) => {
   const { id } = req.params;
   const { imageBase64, ...otherData } = req.body; 
 
   try {
-    // Ambil data lama dulu buat tau dia ada di provinceId mana
     const existingHotspot = await findHotspotById(id);
     if (!existingHotspot) {
       return res.status(404).json({ error: 'Hotspot tidak ditemukan' });
     }
 
     const updateData = { ...otherData };
-
-    // Cek kalo user mau ganti foto
     if (imageBase64) {
       updateData.imageUrl = await uploadToCloudinary(imageBase64, 'rekaloka_hotspots');
     }
 
     const updatedHotspot = await updateHotspot(id, updateData);
 
-    // --- HAPUS CACHE (INVALIDATION) ---
-    // 1. Hapus list utama
     await redis.del(KEY_ALL_HOTSPOTS);
-    // 2. Hapus detail item ini
     await redis.del(keyHotspotDetail(id));
-    // 3. Hapus list provinsi tempat hotspot ini berada
     if (existingHotspot.provinceId) {
       await redis.del(keyHotspotsByProvince(existingHotspot.provinceId));
     }
@@ -165,16 +210,14 @@ export const updateHotspotById = async (req, res) => {
   }
 };
 
-// DELETE /api/v1/hotspots/:id
+// DELETE /api/hotspots/:id
 export const deleteHotspotById = async (req, res) => {
   const { id } = req.params;
   try {
-    // Ambil data dulu buat tau provinceId-nya sebelum dihapus
     const existingHotspot = await findHotspotById(id);
     
     await deleteHotspot(id);
 
-    // --- HAPUS CACHE (INVALIDATION) ---
     await redis.del(KEY_ALL_HOTSPOTS);
     await redis.del(keyHotspotDetail(id));
     if (existingHotspot && existingHotspot.provinceId) {

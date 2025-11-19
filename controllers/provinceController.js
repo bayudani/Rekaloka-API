@@ -7,13 +7,13 @@ import {
 } from '../models/provinceModels.js';
 import { uploadToCloudinary } from '../services/uploader.service.js';
 import redis from '../services/redis.service.js';
-import { calculateDistance } from '../helpers/geo.js'; // <-- JANGAN LUPA INI PENTING BUAT LBS
+import { calculateDistance } from '../helpers/geo.js'; 
 
 // --- HELPERS KEY REDIS ---
 const KEY_ALL_PROVINCES = 'all_provinces';
 const keyProvinceDetail = (id) => `province:${id}`;
 
-// GET /api/v1/provinces
+// GET /api//provinces
 // Support LBS: ?lat=-6.1&long=106.8
 export const getProvinces = async (req, res) => {
     const { lat, long } = req.query; // Ambil param dari URL buat fitur LBS
@@ -63,7 +63,7 @@ export const getProvinces = async (req, res) => {
     }
 };
 
-// GET /api/v1/provinces/:id
+// GET /api//provinces/:id
 export const getProvinceById = async (req, res) => {
     const { id } = req.params;
     const cacheKey = keyProvinceDetail(id);
@@ -90,7 +90,7 @@ export const getProvinceById = async (req, res) => {
     }
 };
 
-// POST /api/v1/provinces
+// POST /api//provinces
 export const createNewProvince = async (req, res) => {
     const {
         name, description, backsoundUrl, iconicInfoJson,
@@ -146,7 +146,7 @@ export const createNewProvince = async (req, res) => {
     }
 };
 
-// PUT /api/v1/provinces/:id
+// PUT /api//provinces/:id
 export const updateProvinceById = async (req, res) => {
     const { id } = req.params;
     const { logoBase64, backgroundBase64, iconicInfoJson, latitude, longitude, ...otherData } = req.body;
@@ -213,7 +213,7 @@ export const updateProvinceById = async (req, res) => {
     }
 };
 
-// DELETE /api/v1/provinces/:id
+// DELETE /api//provinces/:id
 export const deleteProvinceById = async (req, res) => {
     const { id } = req.params;
 

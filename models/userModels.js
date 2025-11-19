@@ -42,11 +42,14 @@ export const findUserForLogin = async (email) => {
 // get profile user
 export const getUserProfile = async (userId) => {
     return await prisma.user.findUnique({
-        // hanya ambil field tertentu
         where: { id: userId },
         select: {
             email: true,
             username: true,
+            level: true,
+            exp: true,
+            role: true,
+            badges: true // Sekalian ambil badge biar lengkap
         },
     });
 };
@@ -90,10 +93,24 @@ export const getTopUsers = async (limit = 10) => {
 };
 
 
-// update user profile(username,dan password)
+// update user password
+export const getUserPasswordHash = async (userId) => {
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { password: true }
+    });
+    return user?.password;
+};
+
+// update user profile 
 export const updateUserProfile = async (userId, data) => {
     return await prisma.user.update({
         where: { id: userId },
         data: data,
+        select: { 
+            id: true,
+            username: true,
+            email: true
+        }
     });
 };

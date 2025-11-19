@@ -5,7 +5,8 @@ import {
     getHotspotById,
     getHotspotsByProvince,
     updateHotspotById,
-    deleteHotspotById
+    deleteHotspotById,
+    getNearbyHotspots
 } from '../controllers/hotspotController.js';
 
 import { verifyToken, verifyAdmin } from '../middleware/authMiddleware.js';
@@ -16,8 +17,9 @@ const router = express.Router();
 // === Rute Publik (GET) ===
 // Siapapun boleh liat data hotspot
 router.get('/', getAllHotspots);
+router.get('/nearby', getNearbyHotspots);
+router.get('/by-province/:provinceId', getHotspotsByProvince);
 router.get('/:id', getHotspotById);
-router.get('/by-province/:provinceId', getHotspotsByProvince); // Penting buat nampilin di Peta
 
 // === Rute Terproteksi (POST, PUT, DELETE) ===
 // Cuma user yang udah login (dan punya token) yang boleh

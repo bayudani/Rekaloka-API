@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import { getUserProfile, getUserExpAndLevel } from '../models/userModels.js';
+import { getUserProfile, getUserExpAndLevel, getUserPasswordHash, updateUserProfile } from '../models/userModels.js';
+import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 
@@ -16,6 +17,84 @@ export const getProfile = async (req, res) => {
     } catch (error) {
         console.error('Error get profile:', error);
         res.status(500).json({ error: 'Gagal mendapatkan profile' });
+    }
+};
+// Update Info Dasar (Saat ini baru Username)
+export const updateProfile = async (req, res) => {
+    const { userId } = req.user;
+    const { username } = req.body;
+
+    if (!username) {
+        return res.status(400).json({ error: 'Username tidak boleh kosong' });
+    }
+
+    try {
+        // Cek username unik
+        //  cek apakah ada user LAIN (bukan diri sendiri) yang pake username ini
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                username: username,
+                NOT: { id: userId }
+            }
+        });
+
+        if (existingUser) {
+            return res.status(409).json({ error: 'Username sudah dipakai orang lain, cari yang lebih unik!' });
+        }
+
+        const updatedUser = await updateUserProfile(userId, { username });
+
+        res.json({
+            message: 'Profil berhasil diperbarui',
+            data: updatedUser
+        });
+
+    } catch (error) {
+        console.error('Update Profile Error:', error);
+        res.status(500).json({ error: 'Gagal update profil', details: error.message });
+    }
+};
+
+
+// Ganti Password dengan Validasi Password Lama (Wajib aman!)
+export const changePassword = async (req, res) => {
+    const { userId } = req.user;
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+        return res.status(400).json({ error: 'Password lama dan baru harus diisi' });
+    }
+
+    if (newPassword.length < 6) {
+        return res.status(400).json({ error: 'Password baru minimal 6 karakter' });
+    }
+
+    try {
+        // 1. Ambil hash password lama dari DB (karena di getUserProfile biasanya di-hidden)
+        const currentPasswordHash = await getUserPasswordHash(userId);
+
+        if (!currentPasswordHash) {
+            return res.status(404).json({ error: 'User tidak ditemukan' });
+        }
+
+        // 2. Bandingkan password lama yg dikirim user vs hash di DB
+        const isMatch = await bcrypt.compare(oldPassword, currentPasswordHash);
+
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Password lama salah!' });
+        }
+
+        // 3. Hash password baru
+        const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+        // 4. Update di DB
+        await updateUserProfile(userId, { password: newPasswordHash });
+
+        res.json({ message: 'Password berhasil diubah! Silakan login ulang.' });
+
+    } catch (error) {
+        console.error('Change Password Error:', error);
+        res.status(500).json({ error: 'Gagal mengubah password', details: error.message });
     }
 };
 

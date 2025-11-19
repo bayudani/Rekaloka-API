@@ -1,97 +1,92 @@
 import fetch from 'node-fetch';
+import { callNanoBanana } from './nanobanana.core.js';
 
-/**
- * Memanggil API Imagen untuk generate gambar
- * @param {string} prompt - Prompt teks dari user
- * @returns {string} Base64 string dari gambar
- */
+
 export const getImageFromAI = async (prompt) => {
-    const apiKey = process.env.GOOGLE_API_KEY;
-    if (!apiKey) {
-        throw new Error('API Key belum di-setting di server');
-    }
+  try {
+    console.log(`🤖 AI Service: Generating Image for "${prompt.substring(0, 15)}..."`);
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
-    const payload = {
-        instances: [{ "prompt": prompt }],
-        parameters: { "sampleCount": 1 }
-    };
-
-    const apiResponse = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+    return await callNanoBanana({
+      prompt: prompt,
+      numImages: 1,
+      type: "TEXTTOIAMGE",
+      image_size: "1:1",
+      callBackUrl: "https://rekaloka.id/dummy-callback"
     });
 
-    if (!apiResponse.ok) {
-        const errorBody = await apiResponse.text();
-        throw new Error(`API call failed: ${apiResponse.status} ${apiResponse.statusText} - ${errorBody}`);
-    }
+  } catch (error) {
+    console.error("⚠️ Nano Banana Error:", error.message);
+    console.log("🔄 Switching to Backup (Pollinations)...");
 
-    const result = await apiResponse.json();
+    // Fallback ke Pollinations (Gratis & Unlimited) biar user tetep dapet gambar
+    return await getImageFromPollinations(prompt);
+  }
+};
 
-    if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
-        return result.predictions[0].bytesBase64Encoded;
-    } else {
-        throw new Error('Gagal memproses gambar dari API');
-    }
+// --- FITUR 2: IMAGE TO IMAGE (Edit / Restorasi) ---
+export const editImageWithAI = async (prompt, inputImageUrl) => {
+  try {
+    console.log(` AI Service: Editing Image...`);
+
+    return await callNanoBanana({
+      prompt: prompt,
+      numImages: 1,
+      type: "IMAGETOIAMGE",
+      image_size: "1:1",
+      imageUrls: [inputImageUrl], // Wajib array URL
+      callBackUrl: "https://rekaloka.id/dummy-callback"
+    });
+
+  } catch (error) {
+    console.error("❌ Error Edit Image:", error.message);
+    throw error; 
+  }
 };
 
 
-/**
- * Menganalisa gambar menggunakan Gemini Vision
- * @param {string} base64Image - String gambar base64 (tanpa prefix data:image...)
- * @param {string} hotspotName - Nama tempat yang harus divalidasi
- * @returns {boolean} True jika gambar valid/sesuai
- */
+const getImageFromPollinations = async (prompt) => {
+  try {
+    const encodedPrompt = encodeURIComponent(prompt);
+    const apiUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=768&nologo=true`;
+
+    const response = await fetch(apiUrl);
+    if (!response.ok) throw new Error('Pollinations Error');
+
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer).toString('base64');
+  } catch (e) {
+    throw new Error('Semua AI Gagal (Nano Banana & Backup). Coba lagi nanti.');
+  }
+};
+
+
 export const validateImageWithGemini = async (base64Image, hotspotName) => {
-    const apiKey = process.env.GOOGLE_API_KEY;
-    // Kita pake Gemini 1.5 Flash karena support Multimodal (Gambar + Teks)
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${apiKey}`;
+  const apiKey = process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    console.warn("GOOGLE_API_KEY ga ada, skip validasi AI (Auto Valid).");
+    return true;
+  }
 
-    // Prompt yang strict biar AI gak halu
-    const prompt = `Look at this image. Does this image show "${hotspotName}" or something related to it (like a sign, statue, building, or artifact)? 
-  Answer strictly with JSON: { "isValid": true } or { "isValid": false }. 
-  If the image is blurry, black, or irrelevant, return false.`;
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  const prompt = `Look at this image. Does this image show "${hotspotName}" or something related to it? Answer JSON: { "isValid": true } or { "isValid": false }.`;
 
-    const payload = {
-        contents: [
-            {
-                parts: [
-                    { text: prompt },
-                    {
-                        inline_data: {
-                            mime_type: "image/jpeg", // Asumsi FE ngirim JPEG/PNG
-                            data: base64Image
-                        }
-                    }
-                ]
-            }
-        ],
-        generationConfig: {
-            response_mime_type: "application/json" // Maksa balikan JSON
-        }
-    };
+  const payload = {
+    contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: base64Image } }] }],
+    generationConfig: { response_mime_type: "application/json" }
+  };
 
-    try {
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-
-        // Parsing hasil dari Gemini
-        const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        if (!textResult) return false;
-
-        const jsonResult = JSON.parse(textResult);
-        return jsonResult.isValid;
-
-    } catch (error) {
-        console.error("Error Gemini Vision:", error);
-        return false; // Kalo error, anggap gak valid biar aman
-    }
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!textResult) return false;
+    return JSON.parse(textResult).isValid;
+  } catch (error) {
+    console.error("Error Gemini Vision:", error);
+    return true;
+  }
 };
