@@ -1,39 +1,43 @@
-## 🚀 Fitur Utama
+# 🏛️ Backend Rekaloka
 
-1. **Autentikasi Modern:**
+Selamat datang di **Backend Service** untuk aplikasi **Rekaloka** . Ini adalah backend utama di balik layar yang ngurusin semua logika game, AI, dan data.
+
+Dibangun dengan _stack_ modern yang **Sat-Set Wat-Wet** : Node.js, Express, Prisma, MySQL, Redis, dan AI dari Nano Banana & Google Gemini.
+
+## 🚀 Fitur Unggulan
+
+1. **🔐 Autentikasi & Security**
    - Register & Login aman (JWT + BCrypt).
-   - Verifikasi Email (OTP via Nodemailer).
-   - Role-Based Access Control (USER vs ADMIN).
-2. **Eksplorasi Peta Budaya (38 Provinsi):**
-   - Data detail tiap provinsi (Deskripsi, Logo, Background).
-   - **LBS (Location Based Service):** Sorting provinsi terdekat dari lokasi user.
-   - Info budaya "abstrak" (Tari, Suku, Bahasa) via JSON dinamis.
-   - Info budaya "fisik" (Candi, Museum) via titik koordinat GPS.
-3. **Game Adaptif Lokasi (LBS):**
-   - **Check-in System:** Validasi User harus berada di radius < 100m dari lokasi.
-   - **AI Vision Validation:** Foto bukti check-in divalidasi otomatis oleh **Google Gemini** (Beneran foto Candi gak?).
-   - **Cloud Upload:** Bukti foto otomatis di-upload ke **Cloudinary** .
-   - **Leveling System:** Dapet EXP tiap check-in, Level user naik otomatis.
-4. **Gamification (Badges & Leaderboard):**
-   - Sistem **Badge Otomatis** (Trigger saat check-in).
-   - **Leaderboard:** Liat siapa sepuh budaya paling niat se-Indonesia.
-5. **AI Text-to-Image:**
-   - Generate konsep gambar budaya 2D pake **Google Imagen 4.0** .
+   - Verifikasi Email via OTP (Nodemailer).
+   - **RBAC (Role-Based Access Control):** Membedakan hak akses `USER` vs `ADMIN`.
+2. **🗺️ Peta Budaya Interaktif (38 Provinsi)**
+   - **Smart LBS (Location Based Service):** Otomatis ngurutin provinsi dari yang terdekat dengan user.
+   - **Data Hibrid:** Menyimpan info fisik (koordinat GPS) dan info abstrak (Tarian, Makanan, Suku) dalam satu tempat.
+3. **🎮 Game Adaptif Lokasi (Mission System)**
+   - **Geofencing:** User cuma bisa check-in kalau jaraknya < 100m dari lokasi asli.
+   - **AI Referee:** Foto bukti check-in diperiksa sama AI (Gemini Vision). Gak bisa nipu pake foto random!
+   - **Leveling:** Dapet EXP, Naik Level, dan Unlock Badge otomatis.
+4. **🤖 Generative AI Studio**
+   - **Text-to-Image:** Bikin ilustrasi budaya dari teks (pake Nano Banana / Pollinations).
+   - **AI Restoration:** Fitur "Perbaiki Foto Rusak" (Image-to-Image).
+5. **🏆 Gamification**
+   - **Leaderboard:** Papan peringkat para "Sultan Budaya".
+   - **Badges:** Koleksi pencapaian (Langkah Awal, Petualang Sejati, dll).
 
-## 🛠️ Tech Stack & Tools
+## 🛠️ Tech Stack
 
-- **Core:** Node.js, Express.js (ES Modules)
+- **Core:** Node.js & Express.js (ES Modules)
 - **Database:** MySQL (via Prisma ORM)
-- **Auth:** `jsonwebtoken` (JWT), `bcrypt`
-- **Email:** `nodemailer`
+- **Caching:** Redis (via `ioredis`) — _Biar response API ngebut!_
 - **AI Engine:**
-  - Google Gemini 1.5 Flash (Vision/Image Analysis)
-  - Google Imagen 4.0 (Image Generation)
-- **Storage:** Cloudinary (Upload gambar gratis & kenceng)
-- **Caching:** Redis (via `ioredis`) buat performa ngebut.
-- **Utils:** `geo.js` (Haversine Formula buat jarak GPS).
+  - Nano Banana API (Image Gen & Edit)
+  - Google Gemini 2.5 Flash (Vision Validator)
+- **Storage:** Cloudinary (Hosting gambar gratis & kenceng)
+- **Utils:** `geo.js` (Haversine Formula buat itung jarak GPS)
 
 ## 🏃 Cara Setup & Jalanin (Localhost)
+
+Buat yang baru join project, ikutin langkah ini biar gak tersesat:
 
 1. **Clone Repository:**
 
@@ -41,76 +45,106 @@
    git clone <repo_url>
    cd rekaloka-backend
    ```
+
 2. **Install Dependencies:**
 
    ```
    npm install
    ```
-3. **Setup Environment Variables (`.env`):**
-   Buat file `.env` (copas dari `.env.example`). Isi data rahasia lo:
 
-   - `DATABASE_URL`: Koneksi MySQL.
-   - `GOOGLE_API_KEY`: API Key Google AI Studio.
-   - `CLOUDINARY_*`: Config Cloudinary.
-   - `REDIS_URL`: Koneksi Redis (Lokal/Cloud).
-   - `MAIL_*`: Config Nodemailer (Gmail App Password).
+3. **Setup Environment Variables (`.env`):**
+   Buat file `.env` (bisa copy dari `.env.example`). Isi data rahasia lo:
+
+   ```
+   PORT=3001
+   DATABASE_URL="mysql://user:pass@host:port/db_name"
+   JWT_SECRET="rahasia_negara_bos"
+
+   # AI Keys
+   GOOGLE_API_KEY="dapet_dari_google_ai_studio"
+   NANOBANANA_API_KEY="dapet_dari_nanobanana"
+
+   # Storage
+   CLOUDINARY_CLOUD_NAME="..."
+   CLOUDINARY_API_KEY="..."
+   CLOUDINARY_API_SECRET="..."
+
+   # Caching (Pilih salah satu)
+   # REDIS_URL="redis://..." (Buat Cloud)
+   # REDIS_HOST="127.0.0.1" (Buat Lokal)
+
+   # Email
+   MAIL_HOST="smtp.gmail.com"
+   MAIL_USER="email@gmail.com"
+   MAIL_PASS="app_password_gmail"
+   ```
+
 4. **Database Migration (PENTING!):**
-   Bikin tabel di database lo otomatis.
+   Biar tabel-tabelnya kebuat otomatis di MySQL.
 
    ```
    npx prisma migrate dev --name init
    ```
+
 5. **Jalanin Server:**
 
    ```
    npm run dev
    ```
 
-   Server jalan di: `http://localhost:3001`
+   Gas! Server jalan di: `http://localhost:3001`
 
-## 📖 Dokumentasi API Lengkap ()
+## 📖 Dokumentasi API Lengkap
 
-Base URL: `http://localhost:3001/api/`
+**Base URL:** `http://localhost:3001/api/`
 
-> **Note:** Semua endpoint yang butuh login wajib pake Header:
+> ⚠️ **PENTING:** Hampir semua endpoint butuh Login. Jangan lupa kirim Header:
 > `Authorization: Bearer <token_jwt_lo>`
 
 ### 🔐 1. Auth (`/auth`)
 
-| Method   | Endpoint      | Deskripsi                          | Body / Payload                                               |
-| -------- | ------------- | ---------------------------------- | ------------------------------------------------------------ |
-| `POST` | `/register` | Daftar user baru & kirim OTP email | `{ "email": "...", "username": "...", "password": "..." }` |
-| `POST` | `/verify`   | Verifikasi akun pake OTP           | `{ "email": "...", "code": 123456 }`                       |
-| `POST` | `/login`    | Masuk & dapet Token JWT            | `{ "email": "...", "password": "..." }`                    |
+| Method | Endpoint    | Deskripsi           | Body JSON                                                  |
+| ------ | ----------- | ------------------- | ---------------------------------------------------------- |
+| `POST` | `/register` | Daftar akun baru    | `{ "email": "...", "username": "...", "password": "..." }` |
+| `POST` | `/verify`   | Verifikasi OTP      | `{ "email": "...", "code": 123456 }`                       |
+| `POST` | `/login`    | Masuk & dapet Token | `{ "email": "...", "password": "..." }`                    |
 
-### 🗺️ 2. Provinces (`/provinces`)
+### 👤 2. Profile & History (`/profile`)
+
+| Method | Endpoint           | Deskripsi                       | Body JSON                                        |
+| ------ | ------------------ | ------------------------------- | ------------------------------------------------ |
+| `GET`  | `/`                | Liat data diri (tanpa password) | -                                                |
+| `PUT`  | `/update`          | Ganti Username                  | `{ "username": "Baru" }`                         |
+| `PUT`  | `/change-password` | Ganti Password                  | `{ "oldPassword": "...", "newPassword": "..." }` |
+| `GET`  | `/exp-level`       | Cek Level & EXP                 | -                                                |
+| `GET`  | `/history`         | **Riwayat Check-in**User        | -                                                |
+
+### 🗺️ 3. Provinces (`/provinces`)
 
 Data provinsi buat Peta Interaktif.
 
-#### `GET /`
+#### `GET /` (Public)
 
-Mengambil semua data provinsi.
+Ambil list semua provinsi.
 
-- **Tanpa Query:** Urutan default database.
-- **LBS Mode:** `?lat=-6.2&long=106.8` (Urutkan berdasarkan jarak terdekat dari user).
+- **Mode Biasa:** Tanpa query.
+- **Mode LBS (Terdekat):** `?lat=-6.2&long=106.8`
 
-#### `GET /:id`
+#### `GET /:id` (Public)
 
-Detail lengkap provinsi termasuk `hotspots` (titik lokasi) dan `iconicInfo` (budaya abstrak).
+Detail lengkap provinsi (termasuk list hotspot & info budaya abstrak).
 
 #### `POST /` (Admin Only)
 
-Membuat provinsi baru.
-
-**Body JSON:**
+Tambah provinsi baru.
 
 ```
 {
   "name": "Jawa Barat",
-  "description": "Provinsi dengan kearifan lokal Sunda...",
-  "backsoundUrl": "[https://link-lagu.mp3](https://link-lagu.mp3)",
   "latitude": -6.9175,
   "longitude": 107.6191,
+  "description": "...",
+  "backsoundUrl": "https://...",
   "iconicInfoJson": "{\"tarian\": [\"Jaipong\"], \"makanan\": [\"Batagor\"]}",
   "logoBase64": "data:image/png;base64,...",
   "backgroundBase64": "data:image/jpeg;base64,..."
@@ -119,58 +153,53 @@ Membuat provinsi baru.
 
 #### `PUT /:id` (Admin Only)
 
-Update data (Partial Update). Cukup kirim field yang mau diubah.
-
-**Body JSON:**
+Update data (Partial). Kirim field yang mau diubah aja. Backend otomatis nge-_merge_ data JSON.
 
 ```
 {
-  "description": "Update deskripsi baru...",
-  "iconicInfoJson": { ... } // Backend otomatis merge sama data lama
+  "iconicInfoJson": {
+     "makanan": [ { "nama": "Seblak", "imageUrl": "..." } ]
+  }
 }
 ```
 
-### 📍 3. Cultural Hotspots (`/hotspots`)
+### 📍 4. Cultural Hotspots (`/hotspots`)
 
-Titik lokasi fisik (Candi, Museum, Warung) yang ada di peta.
+Titik lokasi fisik (Candi, Museum, Warung).
+
+#### `GET /nearby` (Fitur "Sekitar Saya")
+
+Cari tempat wisata di radius user.
+
+- **Query Wajib:** `?lat=...&long=...`
+- **Opsional:** `&radius=20` (Default 10km).
 
 #### `GET /by-province/:provinceId`
 
-Mengambil semua hotspot di provinsi tertentu.
-
-#### `GET /:id`
-
-Detail satu hotspot.
+Ambil semua hotspot di provinsi tertentu.
 
 #### `POST /` (Admin Only)
 
-Menambah lokasi baru.
-
-**Body JSON:**
+Tambah lokasi baru.
 
 ```
 {
   "name": "Gedung Sate",
-  "description": "Ikon kota Bandung...",
   "type": "Monumen",
   "latitude": -6.9022,
   "longitude": 107.6186,
-  "provinceId": "clx_id_jawa_barat",
+  "provinceId": "clx_id_jabar",
   "imageBase64": "data:image/jpeg;base64,..."
 }
 ```
 
-### 🎮 4. Game LBS & Check-in (`/game`)
-
-Fitur utama aplikasi! Validasi lokasi dan foto pake AI.
+### 🎮 5. Game LBS (`/game`)
 
 #### `POST /check-in` (User)
 
-User melakukan check-in di lokasi.
+Misi utama! Validasi lokasi & foto.
 
-**Syarat:** Jarak GPS User < 100m & Foto Valid (AI).
-
-**Body JSON:**
+**Syarat:** Jarak < 100m & Foto Valid (AI).
 
 ```
 {
@@ -187,46 +216,42 @@ User melakukan check-in di lokasi.
 {
   "message": "Check-in Berhasil! GGWP!",
   "reward": "+100 EXP",
-  "validation": "Lokasi & Foto Valid",
   "imageUrl": "[https://res.cloudinary.com/](https://res.cloudinary.com/)...",
-  "newBadge": "Lo dapet badge baru: Langkah Awal!" // (Optional)
+  "newBadge": "Lo dapet badge baru: Langkah Awal!"
 }
 ```
 
-### 👤 5. Profile & History (`/profile`)
+### 🤖 6. AI Generator (`/ai`)
 
-#### `GET /history` (User)
+#### `POST /generate-image` (Text-to-Image)
 
-Mengambil riwayat check-in user (tempat-tempat yang udah dikunjungi).
+Bikin gambar baru dari nol.
 
-### 🏆 6. Gamification (`/badges` & `/leaderboard`)
+- **Body:** `{ "prompt": "Candi Borobudur gaya cyberpunk 8k" }`
 
-#### `GET /badges/my` (User)
+#### `POST /edit-image` (Image-to-Image) ✨
 
-Mengambil koleksi badge user yang sedang login.
+Restorasi atau edit foto yang diupload.
 
-#### `GET /leaderboard` (User)
+- **Body:**
+  ```
+  {
+    "prompt": "Restore this broken statue, make it gold",
+    "imageBase64": "data:image/jpeg;base64,..."
+  }
+  ```
+- **Response:** Balikin URL foto asli & Base64 foto hasil editan.
 
-Melihat Top Player berdasarkan Level dan EXP.
+### 🏆 7. Gamification
 
-- Query: `?limit=10` (Default 10 besar).
+- **`GET /leaderboard`** : Liat Top Player (Level & EXP tertinggi).
+- **`GET /badges/my`** : Liat koleksi badge user sendiri.
 
-### 🤖 7. AI Generator (`/ai`)
+### ☁️ 8. Utility (`/upload`)
 
-#### `POST /generate-image` (User)
-
-Membuat gambar 2D dari teks prompt (Google Imagen).
-
-**Body:** `{ "prompt": "Candi Borobudur k" }`
-
-### ☁️ 8. General Upload (`/upload`)
-
-Upload gambar umum (misal buat ikon Tarian/Makanan buat ditaruh di JSON Province).
-
-#### `POST /` (User/Admin)
-
-**Body:** `{ "imageBase64": "..." }`
-**Response:** `{ "url": "https://res.cloudinary.com/..." }`
+- **`POST /`** : Upload gambar umum (buat ikon tarian/makanan) ke Cloudinary.
+- **Body:** `{ "imageBase64": "..." }`
+- **Response:** `{ "url": "https://..." }`
 
 ## 💡 Catatan Buat Frontend (Flutter)
 
