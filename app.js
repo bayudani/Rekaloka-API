@@ -17,6 +17,11 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 import profile from "./routes/profileRoutes.js";
 
+// swagger
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './docs/swagger.js';
+
+
 const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -28,6 +33,8 @@ app.use(express.urlencoded({ extended: false, limit: "50mb" }));
 
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to the API REKALOKA" });
@@ -69,6 +76,7 @@ if (process.env.NODE_ENV !== "production") {
   const PORT = process.env.PORT || 3001;
   app.listen(PORT, () => {
     console.log(`Server jalan di http://localhost:${PORT}`);
+    console.log(`Dokumentasi jalan di http://localhost:${PORT}/api-docs`);
   });
 }
 
