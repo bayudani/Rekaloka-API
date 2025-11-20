@@ -9,7 +9,7 @@ const options = {
             description: 'Dokumentasi resmi Backend Rekaloka untuk lomba BudayaGO. Platform Edukasi dan Game LBS Budaya Indonesia.',
             contact: {
                 name: 'Tim Rekaloka',
-                email: 'dev@rekaloka.id',
+                email: 'santara.rekaloka@gmail.com',
             },
         },
         servers: [

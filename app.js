@@ -5,6 +5,7 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import logger from "morgan";
 import { fileURLToPath } from "url";
+import cors from "cors";
 import './services/redis.service.js';
 
 import authRoutes from "./routes/authRoutes.js";
@@ -26,6 +27,15 @@ const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// cors
+app.use(cors({
+  origin: '*', 
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  credentials: true 
+}));
+
 
 app.use(logger("dev"));
 app.use(express.json({ limit: "50mb" }));
