@@ -31,11 +31,15 @@ const __dirname = path.dirname(__filename);
 // cors configuration
 
 app.use(cors({
-  origin: '*', 
+  origin: true, // Reflect request origin (biar aman di Vercel)
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  credentials: true 
+  credentials: true
 }));
+
+
+// Handle Preflight Options
+app.options('*', cors());
 
 
 app.use(logger("dev"));
@@ -91,12 +95,9 @@ app.use(function (err, req, res, next) {
   });
 });
 
-if (process.env.NODE_ENV !== "production") {
-  const PORT = process.env.PORT || 3001;
-  app.listen(PORT, () => {
-    console.log(`Server jalan di http://localhost:${PORT}`);
-    console.log(`Dokumentasi jalan di http://localhost:${PORT}/api-docs`);
-  });
-}
+app.listen(PORT, () => {
+  console.log(`🚀 Server Rekaloka jalan di http://localhost:${PORT}`);
+  console.log(`📄 Dokumentasi Swagger: http://localhost:${PORT}/api-docs`);
+});
 
 export default app; // Ganti ke export default
