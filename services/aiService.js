@@ -39,7 +39,7 @@ export const editImageWithAI = async (prompt, inputImageUrl) => {
 
   } catch (error) {
     console.error("❌ Error Edit Image:", error.message);
-    throw error; 
+    throw error;
   }
 };
 

@@ -6,6 +6,7 @@ import {
     updateProfile,
     changePassword
 } from "../controllers/profileController.js";
+import { detectUserProvince } from "../controllers/locationController.js"
 import { verifyToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -14,6 +15,9 @@ const router = express.Router();
 
 // GET /profile
 router.get("/", verifyToken, getProfile);
+
+// GET /profile/detect-province
+router.get("/detect-province", verifyToken, detectUserProvince);
 
 // GET /exp-level
 router.get("/exp-level", verifyToken, getExpAndLevel);

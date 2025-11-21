@@ -1,8 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import { getUserProfile, getUserExpAndLevel, getUserPasswordHash, updateUserProfile } from '../models/userModels.js';
 import bcrypt from 'bcrypt';
-const prisma = new PrismaClient();
+import { calculateLevelProgress } from '../helpers/leveling.js'; 
 
+const prisma = new PrismaClient();
 
 
 // get profile
@@ -100,16 +101,22 @@ export const changePassword = async (req, res) => {
 
 // get exp and level
 export const getExpAndLevel = async (req, res) => {
-    const userId = req.user.userId;
+    const { userId } = req.user;
     try {
-        const userStats = await getUserExpAndLevel(userId);
-        if (!userStats) {
-            return res.status(404).json({ error: 'User tidak ditemukan' });
-        }
-        res.status(200).json(userStats);
+        const userData = await getUserExpAndLevel(userId);
+        
+        if (!userData) return res.status(404).json({ error: 'User not found' });
+
+        // Pake Helper buat hitung detail progress (Current, Next, Percent)
+        const progressStats = calculateLevelProgress(userData.exp);
+
+        res.json({
+            message: "Data Level & EXP berhasil diambil",
+            data: progressStats
+        });
     } catch (error) {
-        console.error('Error get exp and level:', error);
-        res.status(500).json({ error: 'Gagal mendapatkan exp and level' });
+        console.error("Error fetch level:", error);
+        res.status(500).json({ error: 'Error fetching exp/level' });
     }
 };
 // GET /api//profile/history

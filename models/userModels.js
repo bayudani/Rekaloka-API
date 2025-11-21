@@ -48,8 +48,8 @@ export const getUserProfile = async (userId) => {
             username: true,
             level: true,
             exp: true,
-            role: true,
-            badges: true // Sekalian ambil badge biar lengkap
+            // role: true
+            // badges: true
         },
     });
 };
