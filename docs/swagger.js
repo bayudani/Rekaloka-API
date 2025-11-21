@@ -14,7 +14,7 @@ const options = {
         },
         servers: [
             {
-                url: 'http://localhost:3001/api',
+                url: 'https://rekaloka-api2.vercel.app/api/',
                 description: 'Development Server',
             },
         ],
