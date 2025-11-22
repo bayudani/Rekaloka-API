@@ -2,12 +2,12 @@ import { getImageFromAI, editImageWithAI } from '../services/aiService.js';
 import { uploadToCloudinary } from '../services/uploader.service.js';
 import { generate3DModel } from '../services/meshy.service.js';
 
-// POST /api/v1/ai/generate-image (Text to Image)
+// POST /api/ai/generate-image (Text to Image)
 export const generateImage = async (req, res) => {
     const { prompt } = req.body;
 
     if (!prompt) {
-        return res.status(400).json({ error: 'Prompt tidak boleh kosong' });
+        return res.status(400).json({ message: 'Prompt tidak boleh kosong' });
     }
 
     try {
@@ -22,7 +22,7 @@ export const generateImage = async (req, res) => {
 
     } catch (error) {
         console.error('Error Generate Image:', error);
-        // Kirim error message yang jelas ke frontend biar tau kenapa gagal
+        
         res.status(500).json({ error: error.message || 'Gagal generate gambar' });
     }
 };
@@ -32,7 +32,7 @@ export const editImage = async (req, res) => {
     const { prompt, imageBase64 } = req.body;
 
     if (!prompt || !imageBase64) {
-        return res.status(400).json({ error: 'Prompt dan imageBase64 wajib diisi' });
+        return res.status(400).json({ message: 'Prompt dan imageBase64 wajib diisi' });
     }
 
 
@@ -47,7 +47,7 @@ export const editImage = async (req, res) => {
         }
 
         // 2. Panggil Service AI buat Edit
-        // Kita kirim URL gambar yg udah diupload tadi
+        // kirim URL gambar yg udah diupload tadi
         const resultBase64 = await editImageWithAI(prompt, inputImageUrl);
 
         res.json({

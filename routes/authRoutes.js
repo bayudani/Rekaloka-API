@@ -1,14 +1,13 @@
 import express from 'express';
-import { register, verify, login, } from '../controllers/authController.js';
-import { verifyToken } from '../middleware/authMiddleware.js';
+import { register, verify, login,resendCode } from '../controllers/authController.js';
 
 const router = express.Router();
 
-// Base path: /api/v1/auth
+// Base path: /api/auth
 router.post('/register', register);
 router.post('/verify', verify);
 router.post('/login', login);
-// router.get('/profile', verifyToken, getProfile);
-// router.get('/exp-level', verifyToken, getExpAndLevel);
+router.post('/resend-code', resendCode);
+
 
 export default router;

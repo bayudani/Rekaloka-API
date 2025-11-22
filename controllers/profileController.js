@@ -12,12 +12,15 @@ export const getProfile = async (req, res) => {
     try {
         const user = await getUserProfile(userId);
         if (!user) {
-            return res.status(404).json({ error: 'User tidak ditemukan' });
+            return res.status(404).json({ 
+                success: false,
+                message: 'User tidak ditemukan'
+            });
         }
         res.status(200).json(user);
     } catch (error) {
         console.error('Error get profile:', error);
-        res.status(500).json({ error: 'Gagal mendapatkan profile' });
+        res.status(500).json({ message: 'Gagal mendapatkan profile' });
     }
 };
 // Update Info Dasar (Saat ini baru Username)
@@ -26,7 +29,7 @@ export const updateProfile = async (req, res) => {
     const { username } = req.body;
 
     if (!username) {
-        return res.status(400).json({ error: 'Username tidak boleh kosong' });
+        return res.status(400).json({ message: 'Username tidak boleh kosong' });
     }
 
     try {
@@ -40,7 +43,7 @@ export const updateProfile = async (req, res) => {
         });
 
         if (existingUser) {
-            return res.status(409).json({ error: 'Username sudah dipakai orang lain, cari yang lebih unik!' });
+            return res.status(409).json({ message: 'Username sudah dipakai orang lain, cari yang lebih unik!' });
         }
 
         const updatedUser = await updateUserProfile(userId, { username });
@@ -60,14 +63,17 @@ export const updateProfile = async (req, res) => {
 // Ganti Password dengan Validasi Password Lama (Wajib aman!)
 export const changePassword = async (req, res) => {
     const { userId } = req.user;
-    const { oldPassword, newPassword } = req.body;
+    const { oldPassword, newPassword,confirmPassword } = req.body;
 
-    if (!oldPassword || !newPassword) {
-        return res.status(400).json({ error: 'Password lama dan baru harus diisi' });
+    if (!oldPassword || !newPassword || !confirmPassword) {
+        return res.status(400).json({ message: 'Password lama dan baru harus diisi' });
     }
 
     if (newPassword.length < 6) {
-        return res.status(400).json({ error: 'Password baru minimal 6 karakter' });
+        return res.status(400).json({ message: 'Password baru minimal 6 karakter' });
+    }
+    if (newPassword !== confirmPassword) {
+        return res.status(400).json({ message: 'Password baru dan konfirmasi password tidak sesuai' });
     }
 
     try {
@@ -82,7 +88,7 @@ export const changePassword = async (req, res) => {
         const isMatch = await bcrypt.compare(oldPassword, currentPasswordHash);
 
         if (!isMatch) {
-            return res.status(401).json({ error: 'Password lama salah!' });
+            return res.status(401).json({ message: 'Password lama salah!' });
         }
 
         // 3. Hash password baru
@@ -105,7 +111,7 @@ export const getExpAndLevel = async (req, res) => {
     try {
         const userData = await getUserExpAndLevel(userId);
         
-        if (!userData) return res.status(404).json({ error: 'User not found' });
+        if (!userData) return res.status(404).json({ message: 'User not found' });
 
         // Pake Helper buat hitung detail progress (Current, Next, Percent)
         const progressStats = calculateLevelProgress(userData.exp);
@@ -116,7 +122,7 @@ export const getExpAndLevel = async (req, res) => {
         });
     } catch (error) {
         console.error("Error fetch level:", error);
-        res.status(500).json({ error: 'Error fetching exp/level' });
+        res.status(500).json({ message: 'Error fetching exp/level' });
     }
 };
 // GET /api//profile/history
@@ -131,12 +137,12 @@ export const getCheckInHistory = async (req, res) => {
                 isValidated: true // Cuma ambil yang sukses aja
             },
             include: {
-                hotspot: { // Join ke tabel hotspot biar dapet namanya
+                hotspot: { 
                     select: {
                         name: true,
                         type: true,
                         provinceId: true,
-                        imageUrl: true // Bisa tampilin foto lokasi aslinya juga kalo mau
+                        imageUrl: true //tampil foto
                     }
                 }
             },

@@ -15,11 +15,11 @@ const options = {
         servers: [
             {
                 url: 'http://localhost:3001/api/',
-                description: 'Development Server',
+                description: 'Development Server (Local)',
             },
             {
                 url: 'https://rekaloka-api.vercel.app/api/', 
-                description: 'Production Server',
+                description: 'Production Server (Vercel)',
             },
         ],
         components: {
@@ -54,8 +54,8 @@ const options = {
             },
         ],
         tags: [
-            { name: 'Auth', description: 'Autentikasi User (Login/Register)' },
-            { name: 'Profile', description: 'Manajemen Akun & History' },
+            { name: 'Auth', description: 'Autentikasi User (Login/Register/OTP)' },
+            { name: 'Profile', description: 'Manajemen Akun & History & LBS' },
             { name: 'Provinces', description: 'Data Provinsi & Peta Interaktif' },
             { name: 'Hotspots', description: 'Titik Lokasi Budaya (Museum/Candi)' },
             { name: 'Game', description: 'Gameplay Check-in & LBS' },
@@ -88,9 +88,8 @@ const options = {
                     },
                     responses: {
                         201: { description: 'Registrasi berhasil, cek email OTP' },
-                        400: { description: 'Data tidak lengkap (Email/Username/Password kosong)' },
-                        409: { description: 'Email atau Username sudah terdaftar' },
-                        500: { description: 'Server error saat register' },
+                        400: { description: 'Data tidak lengkap' },
+                        409: { description: 'Email/Username sudah terdaftar' },
                     },
                 },
             },
@@ -115,8 +114,32 @@ const options = {
                     },
                     responses: {
                         200: { description: 'Akun terverifikasi' },
-                        400: { description: 'Kode salah atau email tidak valid' },
-                        404: { description: 'User tidak ditemukan' },
+                        400: { description: 'Kode salah/expired' },
+                    },
+                },
+            },
+            '/auth/resend-otp': { // 🔥 NEW: Endpoint Resend OTP
+                post: {
+                    tags: ['Auth'],
+                    summary: 'Kirim Ulang Kode OTP',
+                    description: 'Digunakan jika user tidak menerima kode atau kode expired. Reset kode baru.',
+                    requestBody: {
+                        required: true,
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    required: ['email'],
+                                    properties: {
+                                        email: { type: 'string', example: 'user@example.com' },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    responses: {
+                        200: { description: 'Kode baru dikirim, cooldown dimulai' },
+                        404: { description: 'Email tidak ditemukan' },
                     },
                 },
             },
@@ -141,9 +164,8 @@ const options = {
                     },
                     responses: {
                         200: { description: 'Login sukses, dapet token' },
-                        400: { description: 'Email/Password kosong' },
                         403: { description: 'Akun belum diverifikasi' },
-                        404: { description: 'Email atau password salah' },
+                        404: { description: 'Email/Password salah' },
                     },
                 },
             },
@@ -152,12 +174,26 @@ const options = {
             '/profile': {
                 get: {
                     tags: ['Profile'],
-                    summary: 'Ambil data diri user (tanpa password)',
+                    summary: 'Ambil data diri user',
                     security: [{ bearerAuth: [] }],
                     responses: {
                         200: { description: 'Data user berhasil diambil' },
-                        401: { description: 'Token tidak ada/expired' },
-                        404: { description: 'User tidak ditemukan' },
+                    },
+                },
+            },
+            '/profile/detect-province': { // 🔥 NEW: Endpoint Detect Location
+                get: {
+                    tags: ['Profile'],
+                    summary: 'Deteksi Provinsi User (Reverse Geocoding)',
+                    description: 'Menebak provinsi user berdasarkan Lat/Long menggunakan Nominatim & DB.',
+                    security: [{ bearerAuth: [] }],
+                    parameters: [
+                        { in: 'query', name: 'lat', required: true, schema: { type: 'number' }, description: '-6.200' },
+                        { in: 'query', name: 'long', required: true, schema: { type: 'number' }, description: '106.816' },
+                    ],
+                    responses: {
+                        200: { description: 'Provinsi ditemukan' },
+                        404: { description: 'Lokasi tidak terdeteksi' },
                     },
                 },
             },
@@ -171,19 +207,12 @@ const options = {
                             'application/json': {
                                 schema: {
                                     type: 'object',
-                                    required: ['username'],
-                                    properties: {
-                                        username: { type: 'string', example: 'SultanBaru' },
-                                    },
+                                    properties: { username: { type: 'string' } },
                                 },
                             },
                         },
                     },
-                    responses: {
-                        200: { description: 'Sukses update profil' },
-                        400: { description: 'Username kosong' },
-                        409: { description: 'Username sudah dipakai orang lain' },
-                    },
+                    responses: { 200: { description: 'Sukses update' } },
                 },
             },
             '/profile/change-password': {
@@ -205,11 +234,7 @@ const options = {
                             },
                         },
                     },
-                    responses: {
-                        200: { description: 'Sukses ganti password' },
-                        400: { description: 'Password baru kurang dari 6 karakter' },
-                        401: { description: 'Password lama salah' },
-                    },
+                    responses: { 200: { description: 'Sukses ganti password' } },
                 },
             },
             '/profile/exp-level': {
@@ -217,9 +242,7 @@ const options = {
                     tags: ['Profile'],
                     summary: 'Cek Level & EXP User',
                     security: [{ bearerAuth: [] }],
-                    responses: {
-                        200: { description: 'Info Level & EXP berhasil diambil' },
-                    },
+                    responses: { 200: { description: 'Info Level berhasil diambil' } },
                 },
             },
             '/profile/history': {
@@ -227,9 +250,7 @@ const options = {
                     tags: ['Profile'],
                     summary: 'Riwayat Check-in User',
                     security: [{ bearerAuth: [] }],
-                    responses: {
-                        200: { description: 'List tempat yang dikunjungi' },
-                    },
+                    responses: { 200: { description: 'List history check-in' } },
                 },
             },
 
@@ -238,15 +259,11 @@ const options = {
                 get: {
                     tags: ['Provinces'],
                     summary: 'Ambil semua provinsi (Support LBS)',
-                    description: 'Ambil semua provinsi. Gunakan query lat & long untuk sorting berdasarkan jarak terdekat.',
                     parameters: [
-                        { in: 'query', name: 'lat', schema: { type: 'number' }, description: 'Latitude User (Optional)' },
-                        { in: 'query', name: 'long', schema: { type: 'number' }, description: 'Longitude User (Optional)' },
+                        { in: 'query', name: 'lat', schema: { type: 'number' } },
+                        { in: 'query', name: 'long', schema: { type: 'number' } },
                     ],
-                    responses: {
-                        200: { description: 'List provinsi berhasil diambil' },
-                        500: { description: 'Server error saat ambil data' },
-                    },
+                    responses: { 200: { description: 'List provinsi' } },
                 },
                 post: {
                     tags: ['Provinces'],
@@ -261,23 +278,18 @@ const options = {
                                     properties: {
                                         name: { type: 'string' },
                                         description: { type: 'string' },
-                                        backsoundUrl: { type: 'string' },
+                                        backsoundBase64: { type: 'string', description: 'Base64 Audio MP3' },
                                         latitude: { type: 'number' },
                                         longitude: { type: 'number' },
                                         logoBase64: { type: 'string' },
                                         backgroundBase64: { type: 'string' },
-                                        iconicInfoJson: { type: 'object', description: 'Object JSON (Tarian, Makanan)' },
+                                        iconicInfoJson: { type: 'object' },
                                     },
                                 },
                             },
                         },
                     },
-                    responses: {
-                        201: { description: 'Created successfully' },
-                        400: { description: 'Nama/Deskripsi kosong' },
-                        403: { description: 'Forbidden: Bukan Admin' },
-                        409: { description: 'Nama provinsi sudah ada' },
-                    },
+                    responses: { 201: { description: 'Created' } },
                 },
             },
             '/provinces/{id}': {
@@ -285,10 +297,7 @@ const options = {
                     tags: ['Provinces'],
                     summary: 'Detail Provinsi',
                     parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-                    responses: {
-                        200: { description: 'Detail lengkap provinsi' },
-                        404: { description: 'Provinsi tidak ditemukan' },
-                    },
+                    responses: { 200: { description: 'Detail provinsi' } },
                 },
                 put: {
                     tags: ['Provinces'],
@@ -300,31 +309,19 @@ const options = {
                             'application/json': {
                                 schema: {
                                     type: 'object',
-                                    properties: {
-                                        description: { type: 'string' },
-                                        iconicInfoJson: { type: 'object' },
-                                        // ... field lain optional
-                                    },
+                                    properties: { description: { type: 'string' } },
                                 },
                             },
                         },
                     },
-                    responses: {
-                        200: { description: 'Updated successfully' },
-                        403: { description: 'Forbidden: Bukan Admin' },
-                        404: { description: 'Provinsi tidak ditemukan' },
-                    },
+                    responses: { 200: { description: 'Updated' } },
                 },
                 delete: {
                     tags: ['Provinces'],
                     summary: 'Hapus Provinsi (Admin Only)',
                     security: [{ bearerAuth: [] }],
                     parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-                    responses: {
-                        200: { description: 'Deleted successfully' },
-                        403: { description: 'Forbidden: Bukan Admin' },
-                        404: { description: 'Provinsi tidak ditemukan' },
-                    },
+                    responses: { 200: { description: 'Deleted' } },
                 },
             },
 
@@ -333,7 +330,7 @@ const options = {
                 get: {
                     tags: ['Hotspots'],
                     summary: 'Ambil Semua Hotspot',
-                    responses: { 200: { description: 'List semua hotspot' } },
+                    responses: { 200: { description: 'List hotspot' } },
                 },
                 post: {
                     tags: ['Hotspots'],
@@ -357,28 +354,19 @@ const options = {
                             },
                         },
                     },
-                    responses: {
-                        201: { description: 'Created successfully' },
-                        400: { description: 'Data tidak lengkap' },
-                        403: { description: 'Forbidden: Bukan Admin' },
-                        404: { description: 'ID Provinsi tidak valid' },
-                    },
+                    responses: { 201: { description: 'Created' } },
                 },
             },
             '/hotspots/nearby': {
                 get: {
                     tags: ['Hotspots'],
                     summary: 'Cari Hotspot Sekitar (LBS)',
-                    description: 'Fitur "Budaya Terkait dari Lokasimu". Mencari hotspot dalam radius tertentu.',
                     parameters: [
-                        { in: 'query', name: 'lat', required: true, schema: { type: 'number' }, description: 'Lat User' },
-                        { in: 'query', name: 'long', required: true, schema: { type: 'number' }, description: 'Long User' },
-                        { in: 'query', name: 'radius', schema: { type: 'number', default: 10 }, description: 'Radius KM' },
+                        { in: 'query', name: 'lat', required: true, schema: { type: 'number' } },
+                        { in: 'query', name: 'long', required: true, schema: { type: 'number' } },
+                        { in: 'query', name: 'radius', schema: { type: 'number', default: 10 } },
                     ],
-                    responses: {
-                        200: { description: 'List hotspot terdekat' },
-                        400: { description: 'Lat/Long tidak ada atau format salah' },
-                    },
+                    responses: { 200: { description: 'List hotspot terdekat' } },
                 },
             },
             '/hotspots/by-province/{provinceId}': {
@@ -386,10 +374,7 @@ const options = {
                     tags: ['Hotspots'],
                     summary: 'Ambil Hotspot per Provinsi',
                     parameters: [{ in: 'path', name: 'provinceId', required: true, schema: { type: 'string' } }],
-                    responses: {
-                        200: { description: 'List hotspot di provinsi tersebut' },
-                        404: { description: 'Provinsi tidak ditemukan' },
-                    },
+                    responses: { 200: { description: 'List hotspot' } },
                 },
             },
             '/hotspots/{id}': {
@@ -397,42 +382,21 @@ const options = {
                     tags: ['Hotspots'],
                     summary: 'Detail Hotspot',
                     parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-                    responses: {
-                        200: { description: 'Detail hotspot' },
-                        404: { description: 'Hotspot tidak ditemukan' },
-                    },
+                    responses: { 200: { description: 'Detail hotspot' } },
                 },
                 put: {
                     tags: ['Hotspots'],
                     summary: 'Update Hotspot (Admin Only)',
                     security: [{ bearerAuth: [] }],
                     parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-                    requestBody: {
-                        content: {
-                            'application/json': {
-                                schema: {
-                                    type: 'object',
-                                    properties: { name: { type: 'string' }, description: { type: 'string' } },
-                                },
-                            },
-                        },
-                    },
-                    responses: {
-                        200: { description: 'Updated successfully' },
-                        403: { description: 'Forbidden: Bukan Admin' },
-                        404: { description: 'Hotspot tidak ditemukan' },
-                    },
+                    responses: { 200: { description: 'Updated' } },
                 },
                 delete: {
                     tags: ['Hotspots'],
                     summary: 'Hapus Hotspot (Admin Only)',
                     security: [{ bearerAuth: [] }],
                     parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-                    responses: {
-                        200: { description: 'Deleted successfully' },
-                        403: { description: 'Forbidden: Bukan Admin' },
-                        404: { description: 'Hotspot tidak ditemukan' },
-                    },
+                    responses: { 200: { description: 'Deleted' } },
                 },
             },
 
@@ -441,7 +405,6 @@ const options = {
                 post: {
                     tags: ['Game'],
                     summary: 'Check-in Lokasi (Main Game)',
-                    description: 'Validasi LBS (<100m) dan AI Vision.',
                     security: [{ bearerAuth: [] }],
                     requestBody: {
                         content: {
@@ -453,7 +416,7 @@ const options = {
                                         hotspotId: { type: 'string' },
                                         userLat: { type: 'number' },
                                         userLong: { type: 'number' },
-                                        imageBase64: { type: 'string', description: 'Foto bukti check-in' },
+                                        imageBase64: { type: 'string', description: 'Foto bukti' },
                                     },
                                 },
                             },
@@ -461,8 +424,7 @@ const options = {
                     },
                     responses: {
                         200: { description: 'Check-in Valid! Dapet EXP.' },
-                        400: { description: 'Kejauhan, Foto Salah, atau Data Gak Lengkap' },
-                        404: { description: 'Lokasi hotspot tidak ditemukan' },
+                        400: { description: 'Kejauhan/Foto Salah' },
                     },
                 },
             },
@@ -484,17 +446,13 @@ const options = {
                             },
                         },
                     },
-                    responses: {
-                        200: { description: 'Base64 Image berhasil digenerate' },
-                        400: { description: 'Prompt kosong' },
-                        500: { description: 'Gagal generate gambar (AI Error)' },
-                    },
+                    responses: { 200: { description: 'Image Generated' } },
                 },
             },
             '/ai/edit-image': {
                 post: {
                     tags: ['AI'],
-                    summary: 'Image to Image (Restorasi/Edit)',
+                    summary: 'Image to Image (Restorasi)',
                     security: [{ bearerAuth: [] }],
                     requestBody: {
                         content: {
@@ -510,11 +468,7 @@ const options = {
                             },
                         },
                     },
-                    responses: {
-                        200: { description: 'Edited Image Base64' },
-                        400: { description: 'Prompt/Image kosong' },
-                        500: { description: 'Gagal edit gambar' },
-                    },
+                    responses: { 200: { description: 'Image Edited' } },
                 },
             },
 
@@ -522,11 +476,9 @@ const options = {
             '/badges/my': {
                 get: {
                     tags: ['Badges'],
-                    summary: 'Liat Badge Saya',
+                    summary: 'Liat Badge Saya (Locked & Unlocked)',
                     security: [{ bearerAuth: [] }],
-                    responses: {
-                        200: { description: 'List badge user' },
-                    },
+                    responses: { 200: { description: 'List badge user dengan status unlocked' } },
                 },
             },
             '/badges/{userId}': {
@@ -534,9 +486,7 @@ const options = {
                     tags: ['Badges'],
                     summary: 'Liat Badge User Lain',
                     parameters: [{ in: 'path', name: 'userId', required: true, schema: { type: 'string' } }],
-                    responses: {
-                        200: { description: 'List badge user lain' },
-                    },
+                    responses: { 200: { description: 'List badge user lain' } },
                 },
             },
 
@@ -547,9 +497,7 @@ const options = {
                     summary: 'Top User Rank',
                     security: [{ bearerAuth: [] }],
                     parameters: [{ in: 'query', name: 'limit', schema: { type: 'number' } }],
-                    responses: {
-                        200: { description: 'List user ranking' },
-                    },
+                    responses: { 200: { description: 'List ranking' } },
                 },
             },
 
@@ -573,11 +521,7 @@ const options = {
                             },
                         },
                     },
-                    responses: {
-                        200: { description: 'URL gambar' },
-                        400: { description: 'Image Base64 kosong' },
-                        500: { description: 'Gagal upload ke Cloudinary' },
-                    },
+                    responses: { 200: { description: 'URL gambar' } },
                 },
             },
         },

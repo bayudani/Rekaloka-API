@@ -11,7 +11,7 @@ export const createHotspot = async (data) => {
 };
 
 /**
- * Mengambil semua hotspot (mungkin buat admin)
+ * Mengambil semua hotspot
  */
 export const findAllHotspots = async () => {
     return await prisma.culturalHotspot.findMany();

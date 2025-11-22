@@ -1,7 +1,5 @@
 import Redis from 'ioredis';
 
-// Konfigurasi Redis
-// Prioritas: Cek REDIS_URL dulu (buat Cloud), kalo gak ada baru cek host/port manual (Lokal)
 let redis;
 
 if (process.env.REDIS_URL) {

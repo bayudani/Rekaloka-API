@@ -5,15 +5,15 @@ import {
     updateProvince,
     deleteProvince
 } from '../models/provinceModels.js';
-import { uploadToCloudinary } from '../services/uploader.service.js';
+import { uploadToCloudinary, uploadAudioToCloudinary } from '../services/uploader.service.js';
 import redis from '../services/redis.service.js';
-import { calculateDistance } from '../helpers/geo.js'; 
+import { calculateDistance } from '../helpers/geo.js';
 
 // --- HELPERS KEY REDIS ---
 const KEY_ALL_PROVINCES = 'all_provinces';
 const keyProvinceDetail = (id) => `province:${id}`;
 
-// GET /api//provinces
+// GET /api/provinces
 // Support LBS: ?lat=-6.1&long=106.8
 export const getProvinces = async (req, res) => {
     const { lat, long } = req.query; // Ambil param dari URL buat fitur LBS
@@ -21,7 +21,6 @@ export const getProvinces = async (req, res) => {
     try {
         let provincesData = [];
 
-        // 1. AMBIL DATA (Cek Cache dulu, kalo gak ada baru ke DB)
         const cacheData = await redis.get(KEY_ALL_PROVINCES);
 
         if (cacheData) {
@@ -31,18 +30,17 @@ export const getProvinces = async (req, res) => {
             // console.log('🐢 Miss Redis, Fetching DB...');
             provincesData = await findAllProvinces();
 
-            // Simpen ke Redis biar next request ngebut (TTL 1 jam)
             await redis.set(KEY_ALL_PROVINCES, JSON.stringify(provincesData), 'EX', 3600);
         }
 
         // 2. LOGIKA LBS (Sorting Jarak)
-        // Kalo user ngirim lat & long, kita urutin datanya sebelum dikirim
+        // Kalo user ngirim lat & long,  urutin datanya sebelum dikirim
         if (lat && long) {
             const userLat = parseFloat(lat);
             const userLong = parseFloat(long);
 
             const sortedProvinces = provincesData.map(prov => {
-                // Kalo provinsi belum punya koordinat di DB, anggep jauh banget (taruh paling bawah)
+                // Kalo provinsi belum punya koordinat di DB, anggep jauh (taruh paling bawah)
                 if (!prov.latitude || !prov.longitude) {
                     return { ...prov, distance: 999999999 };
                 }
@@ -55,15 +53,15 @@ export const getProvinces = async (req, res) => {
             return res.json(sortedProvinces);
         }
 
-        // 3. Kalo gak ada query LBS, balikin data default (urutan database)
+        // 3. Kalo gak ada query LBS, balikin data default
         res.json(provincesData);
 
     } catch (error) {
-        res.status(500).json({ error: 'Gagal mengambil data provinsi', details: error.message });
+        res.status(500).json({ message: 'Gagal mengambil data provinsi', details: error.message });
     }
 };
 
-// GET /api//provinces/:id
+// GET /api/provinces/:id
 export const getProvinceById = async (req, res) => {
     const { id } = req.params;
     const cacheKey = keyProvinceDetail(id);
@@ -79,7 +77,7 @@ export const getProvinceById = async (req, res) => {
         const province = await findProvinceById(id);
 
         if (!province) {
-            return res.status(404).json({ error: 'Provinsi tidak ditemukan' });
+            return res.status(404).json({ message: 'Provinsi tidak ditemukan' });
         }
 
         // Simpen Cache Detail
@@ -93,18 +91,21 @@ export const getProvinceById = async (req, res) => {
 // POST /api//provinces
 export const createNewProvince = async (req, res) => {
     const {
-        name, description, backsoundUrl, iconicInfoJson,
-        logoBase64, backgroundBase64,
-        latitude, longitude
+        name, 
+        description,
+        backsoundBase64,
+        iconicInfoJson,
+        logoBase64,
+        backgroundBase64,
+        latitude,
+        longitude
     } = req.body;
 
     if (!name || !description) {
-        return res.status(400).json({ error: 'Nama dan deskripsi provinsi tidak boleh kosong' });
+        return res.status(400).json({ message: 'Nama dan deskripsi provinsi tidak boleh kosong' });
     }
 
     try {
-        // --- FIX OTOMATIS JSON ---
-        // Jaga-jaga kalo FE ngirim object beneran, kita stringify dulu biar DB gak error
         const iconicInfoString = typeof iconicInfoJson === 'object'
             ? JSON.stringify(iconicInfoJson)
             : iconicInfoJson;
@@ -121,10 +122,16 @@ export const createNewProvince = async (req, res) => {
             backgroundUrl = await uploadToCloudinary(backgroundBase64, 'rekaloka_provinces/backgrounds');
         }
 
+        // audio
+        let finalBacksoundUrl = null;
+        if (backsoundBase64) {
+            finalBacksoundUrl = await uploadAudioToCloudinary(backsoundBase64, 'rekaloka_provinces/audio');
+        }
+
         const newProvince = await createProvince({
             name,
             description,
-            backsoundUrl,
+            backsoundUrl: finalBacksoundUrl,
             iconicInfoJson: iconicInfoString,
             logoUrl,
             backgroundUrl,
@@ -132,8 +139,6 @@ export const createNewProvince = async (req, res) => {
             longitude: longitude ? parseFloat(longitude) : null
         });
 
-        // --- HAPUS CACHE (INVALIDATION) ---
-        // Karena ada data baru, cache list lama jadi basi. Hapus biar di-refresh pas ada yg request lagi.
         await redis.del(KEY_ALL_PROVINCES);
 
         res.status(201).json({ message: 'Provinsi baru berhasil dibuat', data: newProvince });
@@ -142,11 +147,11 @@ export const createNewProvince = async (req, res) => {
             return res.status(409).json({ error: 'Nama provinsi sudah ada' });
         }
         console.error('Error create province:', error);
-        res.status(500).json({ error: 'Gagal membuat provinsi', details: error.message });
+        res.status(500).json({ message: 'Gagal membuat provinsi', details: error.message });
     }
 };
 
-// PUT /api//provinces/:id
+// PUT /api/provinces/:id
 export const updateProvinceById = async (req, res) => {
     const { id } = req.params;
     const { logoBase64, backgroundBase64, iconicInfoJson, latitude, longitude, ...otherData } = req.body;
@@ -155,7 +160,7 @@ export const updateProvinceById = async (req, res) => {
         // 1. Ambil data lama dulu buat keperluan merging & validasi ID
         const existingProvince = await findProvinceById(id);
         if (!existingProvince) {
-            return res.status(404).json({ error: 'Provinsi tidak ditemukan' });
+            return res.status(404).json({ message: 'Provinsi tidak ditemukan' });
         }
 
         const updateData = { ...otherData };
@@ -198,12 +203,15 @@ export const updateProvinceById = async (req, res) => {
             updateData.backgroundUrl = await uploadToCloudinary(backgroundBase64, 'rekaloka_provinces/backgrounds');
         }
 
+        // Cek kalo user mau ganti backsound
+        if (req.body.backsoundBase64) {
+            updateData.backsoundUrl = await uploadAudioToCloudinary(req.body.backsoundBase64, 'rekaloka_provinces/audio');
+        }
+
         const updatedProvince = await updateProvince(id, updateData);
 
-        // --- HAPUS CACHE (INVALIDATION) ---
-        // 1. Hapus list utama (karena mungkin nama/deskripsi di list berubah)
         await redis.del(KEY_ALL_PROVINCES);
-        // 2. Hapus detail provinsi ini (biar user dapet data terbaru pas buka detail)
+        // hapus cache detail biar gak kadaluarsa
         await redis.del(keyProvinceDetail(id));
 
         res.status(200).json({ message: 'Provinsi berhasil di-update', data: updatedProvince });
@@ -213,14 +221,13 @@ export const updateProvinceById = async (req, res) => {
     }
 };
 
-// DELETE /api//provinces/:id
+// DELETE /api/provinces/:id
 export const deleteProvinceById = async (req, res) => {
     const { id } = req.params;
 
     try {
         await deleteProvince(id);
 
-        // --- HAPUS CACHE (INVALIDATION) ---
         await redis.del(KEY_ALL_PROVINCES);
         await redis.del(keyProvinceDetail(id));
 

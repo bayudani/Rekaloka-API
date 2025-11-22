@@ -3,18 +3,21 @@ import { calculateDistance } from '../helpers/geo.js';
 import { validateImageWithGemini } from '../services/aiService.js';
 import { uploadToCloudinary } from '../services/uploader.service.js';
 import { checkAndAwardBadges } from '../services/badge.service.js';
-import { calculateLevel } from '../helpers/leveling.js'; // <-- Import Helper Leveling
+import { calculateLevel } from '../helpers/leveling.js'; 
 
 const prisma = new PrismaClient();
 
-// POST /api/v1/game/check-in
+// POST /api/game/check-in
 // Endpoint utama buat main game (Check-in Lokasi)
 export const checkInLocation = async (req, res) => {
     const { hotspotId, userLat, userLong, imageBase64 } = req.body;
     const { userId } = req.user;
 
     if (!hotspotId || !userLat || !userLong || !imageBase64) {
-        return res.status(400).json({ error: 'Data tidak lengkap (butuh hotspotId, GPS, dan Foto)' });
+        return res.status(400).json({
+            status: false,
+            message: 'Data tidak lengkap (butuh hotspotId, GPS, dan Foto)' 
+        });
     }
 
     try {
@@ -27,37 +30,39 @@ export const checkInLocation = async (req, res) => {
 
         // 2. CEK JARAK (Geofencing 100m)
         // Pastikan user beneran ada di lokasi, bukan spoofing GPS dari rumah
-        const MAX_DISTANCE_METERS = 100;
+        const MAX_DISTANCE_METERS = 200;
         const distance = calculateDistance(userLat, userLong, hotspot.latitude, hotspot.longitude);
 
         if (distance > MAX_DISTANCE_METERS) {
             return res.status(400).json({
-                error: 'Kejauhan, bro!',
-                message: `Lo berjarak ${Math.round(distance)}m dari lokasi. Mendekat lagi sampe < ${MAX_DISTANCE_METERS}m.`
+                success: false,
+                error: 'Kejauhan!',
+                message: `Kamu berjarak ${Math.round(distance)}m dari lokasi. Mendekat lagi sampe < ${MAX_DISTANCE_METERS}m.`
             });
         }
 
         // 3. CEK DUPLIKASI CHECK-IN
-        // User cuma boleh check-in valid sekali per tempat (biar gak farming EXP di satu tempat)
+        // User cuma boleh check-in valid sekali per tempat
         const existingCheckIn = await prisma.gameCheckin.findFirst({
             where: { userId, hotspotId, isValidated: true }
         });
 
         if (existingCheckIn) {
-            return res.status(400).json({ error: 'Lo udah pernah check-in di sini, bro. Cari tempat lain!' });
+            return res.status(400).json({ error: 'Kamu sudah pernah check-in di sini. Cari tempat lain!' });
         }
 
         // 4. VALIDASI AI (Gemini Vision)
         // Bersihin string base64 dulu sebelum dikirim ke AI
         const cleanBase64ForAI = imageBase64.replace(/^data:image\/\w+;base64,/, "");
 
-        // Tanya Gemini: "Ini beneran foto [Nama Tempat] gak?"
+        // Tanya Gemini: "Ini beneran foto [Nama Tempat]?"
         const isImageValid = await validateImageWithGemini(cleanBase64ForAI, hotspot.name);
 
         if (!isImageValid) {
             return res.status(400).json({
+                success: false,
                 error: 'AI gagal mengenali tempat ini.',
-                message: 'Foto lo gak jelas atau gak sesuai sama lokasi. Coba foto ulang yang jelas!'
+                message: 'Foto Kamu gak jelas atau gak sesuai sama lokasi. Coba foto ulang yang jelas!'
             });
         }
 
@@ -75,7 +80,7 @@ export const checkInLocation = async (req, res) => {
                 data: {
                     userId,
                     hotspotId,
-                    imageUrl: cloudUrl, // Simpan URL Cloudinary
+                    imageUrl: cloudUrl,
                     isValidated: true
                 }
             });
@@ -98,13 +103,13 @@ export const checkInLocation = async (req, res) => {
         // --- END TRANSACTION ---
 
 
-        // --- TRIGGER BADGE SYSTEM (Ditaruh SETELAH transaction selesai) ---
+        // --- TRIGGER BADGE SYSTEM ---
         // Cek apakah user berhak dapet badge baru setelah check-in ini
         let newBadgeNotif = null;
         try {
             const earnedBadges = await checkAndAwardBadges(userId);
             if (earnedBadges && earnedBadges.length > 0) {
-                newBadgeNotif = `Lo dapet badge baru: ${earnedBadges.map(b => b.name).join(', ')}!`;
+                newBadgeNotif = `Kamu dapet badge baru: ${earnedBadges.map(b => b.name).join(', ')}!`;
             }
         } catch (badgeError) {
             console.error("Gagal cek badge (tapi check-in aman):", badgeError);
@@ -113,6 +118,7 @@ export const checkInLocation = async (req, res) => {
 
         // Kirim Respon Sukses ke Frontend
         res.status(200).json({
+            status: true,
             message: 'Check-in Berhasil!',
             reward: `+${EXP_REWARD} EXP`,
             validation: 'Lokasi & Foto Valid',
@@ -122,6 +128,8 @@ export const checkInLocation = async (req, res) => {
 
     } catch (error) {
         console.error('Error Game Check-in:', error);
-        res.status(500).json({ error: 'Gagal melakukan check-in', details: error.message });
+        res.status(500).json({ 
+            status:false,
+            message: 'Gagal melakukan check-in', details: error.message });
     }
 };

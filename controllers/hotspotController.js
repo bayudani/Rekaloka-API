@@ -6,7 +6,7 @@ import {
   updateHotspot,
   deleteHotspot
 } from '../models/hotspotModels.js';
-import { findProvinceById } from '../models/provinceModels.js'; 
+import { findProvinceById } from '../models/provinceModels.js';
 
 import { uploadToCloudinary } from '../services/uploader.service.js';
 import redis from '../services/redis.service.js';
@@ -32,7 +32,7 @@ export const getNearbyHotspots = async (req, res) => {
 
     // Cek validitas float
     if (isNaN(userLat) || isNaN(userLong)) {
-        return res.status(400).json({ error: 'Format lat/long salah. Jangan pakai tanda kurung {}' });
+      return res.status(400).json({ error: 'Format lat/long salah. Jangan pakai tanda kurung {}' });
     }
 
     let hotspotsData = [];
@@ -49,10 +49,10 @@ export const getNearbyHotspots = async (req, res) => {
       .map(spot => {
         if (!spot.latitude || !spot.longitude) return null;
         const dist = calculateDistance(userLat, userLong, spot.latitude, spot.longitude);
-        return { ...spot, distance: Math.round(dist) }; 
+        return { ...spot, distance: Math.round(dist) };
       })
-      .filter(spot => spot !== null && spot.distance <= searchRadius) 
-      .sort((a, b) => a.distance - b.distance); 
+      .filter(spot => spot !== null && spot.distance <= searchRadius)
+      .sort((a, b) => a.distance - b.distance);
 
     res.status(200).json({
       message: `Ditemukan ${nearbyHotspots.length} lokasi di sekitar kamu`,
@@ -61,7 +61,11 @@ export const getNearbyHotspots = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ error: 'Gagal mencari lokasi sekitar', details: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Gagal mencari lokasi sekitar',
+      error: error.message,
+    });
   }
 };
 
@@ -77,41 +81,48 @@ export const getHotspotsByProvince = async (req, res) => {
       return res.json(JSON.parse(cachedData));
     }
 
-    // 2. [FIX] Validasi: Cek apakah Provinsinya beneran ada di DB?
+    // 2.  Validasi: Cek apakah Provinsinya beneran ada di DB?
     const provinceExists = await findProvinceById(provinceId);
     if (!provinceExists) {
-        // Kalo ID Provinsinya ngawur/gak ketemu, langsung return 404
-        return res.status(404).json({ error: 'Provinsi tidak ditemukan. ID Provinsi salah.' });
+      // Kalo ID Provinsinya gak ketemu, langsung return 404
+      return res.status(404).json({ 
+        status: false,
+        message: 'Provinsi tidak ditemukan. ID Provinsi salah.' 
+      });
     }
 
     // 3. Ambil Hotspot dari DB (Kalo provinsi valid)
     const hotspots = await findHotspotsByProvinceId(provinceId);
-    
-    // Simpen Redis (walaupun kosong array-nya tetep di-cache biar ga nanya DB mulu)
+
+    // Simpen Redis
     await redis.set(cacheKey, JSON.stringify(hotspots), 'EX', 3600);
 
     res.status(200).json(hotspots);
   } catch (error) {
-    res.status(500).json({ error: 'Gagal mengambil data hotspot', details: error.message });
+    res.status(500).json({ 
+      status: false,
+      message: 'Gagal mengambil data hotspot', 
+      details: error.message 
+    });
   }
 };
 
 // POST /api/hotspots
 export const createNewHotspot = async (req, res) => {
-  const { 
-    name, description, latitude, longitude, type, provinceId, 
-    imageBase64 
+  const {
+    name, description, latitude, longitude, type, provinceId,
+    imageBase64
   } = req.body;
 
   if (!name || !latitude || !longitude || !type || !provinceId) {
-    return res.status(400).json({ error: 'Data (name, lat, long, type, provinceId) tidak boleh kosong' });
+    return res.status(400).json({ message: 'Data (name, lat, long, type, provinceId) tidak boleh kosong' });
   }
 
   try {
     // Validasi ID Provinsi pas create juga penting
     const provinceExists = await findProvinceById(provinceId);
     if (!provinceExists) {
-        return res.status(404).json({ error: 'ID Provinsi tidak valid/tidak ditemukan' });
+      return res.status(404).json({ message: 'ID Provinsi tidak valid/tidak ditemukan' });
     }
 
     let imageUrl = null;
@@ -126,7 +137,7 @@ export const createNewHotspot = async (req, res) => {
       longitude: parseFloat(longitude),
       type,
       provinceId,
-      imageUrl 
+      imageUrl
     });
 
     await redis.del(KEY_ALL_HOTSPOTS);
@@ -135,7 +146,7 @@ export const createNewHotspot = async (req, res) => {
     res.status(201).json({ message: 'Hotspot baru berhasil dibuat', data: newHotspot });
   } catch (error) {
     console.error('Error create hotspot:', error);
-    res.status(500).json({ error: 'Gagal membuat hotspot', details: error.message });
+    res.status(500).json({ message: 'Gagal membuat hotspot', details: error.message });
   }
 };
 
@@ -152,7 +163,7 @@ export const getAllHotspots = async (req, res) => {
 
     res.status(200).json(hotspots);
   } catch (error) {
-    res.status(500).json({ error: 'Gagal mengambil data hotspot', details: error.message });
+    res.status(500).json({ message: 'Gagal mengambil data hotspot', details: error.message });
   }
 };
 
@@ -169,7 +180,7 @@ export const getHotspotById = async (req, res) => {
 
     const hotspot = await findHotspotById(id);
     if (!hotspot) {
-      return res.status(404).json({ error: 'Hotspot tidak ditemukan' });
+      return res.status(404).json({ message: 'Hotspot tidak ditemukan' });
     }
 
     await redis.set(cacheKey, JSON.stringify(hotspot), 'EX', 3600);
@@ -182,12 +193,12 @@ export const getHotspotById = async (req, res) => {
 // PUT /api/hotspots/:id
 export const updateHotspotById = async (req, res) => {
   const { id } = req.params;
-  const { imageBase64, ...otherData } = req.body; 
+  const { imageBase64, ...otherData } = req.body;
 
   try {
     const existingHotspot = await findHotspotById(id);
     if (!existingHotspot) {
-      return res.status(404).json({ error: 'Hotspot tidak ditemukan' });
+      return res.status(404).json({ message: 'Hotspot tidak ditemukan' });
     }
 
     const updateData = { ...otherData };
@@ -215,7 +226,7 @@ export const deleteHotspotById = async (req, res) => {
   const { id } = req.params;
   try {
     const existingHotspot = await findHotspotById(id);
-    
+
     await deleteHotspot(id);
 
     await redis.del(KEY_ALL_HOTSPOTS);
@@ -227,7 +238,7 @@ export const deleteHotspotById = async (req, res) => {
     res.status(200).json({ message: 'Hotspot berhasil dihapus' });
   } catch (error) {
     if (error.code === 'P2025') {
-      return res.status(404).json({ error: 'Hotspot tidak ditemukan' });
+      return res.status(404).json({ message: 'Hotspot tidak ditemukan' });
     }
     res.status(500).json({ error: 'Gagal menghapus hotspot', details: error.message });
   }

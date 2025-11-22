@@ -1,17 +1,15 @@
 import { PrismaClient } from '@prisma/client';
+import { BADGE_MASTER_LIST } from '../helpers/badgeConstants.js'; 
+
 const prisma = new PrismaClient();
 
-/**
- * Cek dan kasih badge ke user berdasarkan pencapaian mereka
- * @param {string} userId - ID User
- */
 export const checkAndAwardBadges = async (userId) => {
     try {
         const user = await prisma.user.findUnique({
             where: { id: userId },
             include: {
-                _count: { select: { checkIns: { where: { isValidated: true } } } }, // Hitung check-in valid
-                badges: true // Ambil badge yang udah punya
+                _count: { select: { checkIns: { where: { isValidated: true } } } },
+                badges: true 
             }
         });
 
@@ -20,46 +18,60 @@ export const checkAndAwardBadges = async (userId) => {
         const checkInCount = user._count.checkIns;
         const userLevel = user.level;
         const existingBadgeNames = user.badges.map(b => b.name);
+        const newBadges = [];   
 
-        const newBadges = [];
+        const getBadge = (id) => BADGE_MASTER_LIST.find(b => b.id === id);
 
-        // --- RULE 1: Check-in Pertama Kali ---
-        if (checkInCount >= 1 && !existingBadgeNames.includes('Langkah Awal')) {
+        // --- 1. Turis Biasa (Check-in >= 1) ---
+        const b1 = getBadge('badge_turis_biasa');
+        if (checkInCount >= 1 && !existingBadgeNames.includes(b1.name)) {
             newBadges.push({
-                name: 'Langkah Awal',
-                description: 'Selamat! Lo udah mulai perjalanan melestarikan budaya.',
-                iconUrl: 'https://cdn-icons-png.flaticon.com/512/2997/2997250.png', // Ganti icon sesuka hati
+                name: b1.name,
+                description: b1.description,
+                iconUrl: b1.iconUrl,
                 userId: userId
             });
         }
 
-        // --- RULE 2: Check-in 5 Kali ---
-        if (checkInCount >= 5 && !existingBadgeNames.includes('Petualang Sejati')) {
+        // --- 2. Penjelajah Budaya (Check-in >= 5) ---
+        const b2 = getBadge('badge_penjelajah_budaya');
+        if (checkInCount >= 5 && !existingBadgeNames.includes(b2.name)) {
             newBadges.push({
-                name: 'Petualang Sejati',
-                description: 'Gokil! Lo udah mengunjungi 5 situs budaya.',
-                iconUrl: 'https://cdn-icons-png.flaticon.com/512/6706/6706760.png',
+                name: b2.name,
+                description: b2.description,
+                iconUrl: b2.iconUrl,
                 userId: userId
             });
         }
 
-        // --- RULE 3: Level 5 (Sepuh Pemula) ---
-        if (userLevel >= 5 && !existingBadgeNames.includes('Warga Lokal')) {
+        // --- 3. Pakar Warisan (Level >= 5) ---
+        const b3 = getBadge('badge_pakar_warisan');
+        if (userLevel >= 5 && !existingBadgeNames.includes(b3.name)) {
             newBadges.push({
-                name: 'Warga Lokal',
-                description: 'Level 5! Lo udah mulai dikenal di tongkrongan budaya.',
-                iconUrl: 'https://cdn-icons-png.flaticon.com/512/3135/3135768.png',
+                name: b3.name,
+                description: b3.description,
+                iconUrl: b3.iconUrl,
                 userId: userId
             });
         }
 
-        // --- Eksekusi Pemberian Badge ---
+        // --- 4. Maestro Budaya (Level >= 10) ---
+        // Ini kasta tertinggi bro!
+        const b4 = getBadge('badge_maestro_budaya');
+        if (userLevel >= 10 && !existingBadgeNames.includes(b4.name)) {
+            newBadges.push({
+                name: b4.name,
+                description: b4.description,
+                iconUrl: b4.iconUrl,
+                userId: userId
+            });
+        }
+
+        // --- Eksekusi ---
         if (newBadges.length > 0) {
-            await prisma.badge.createMany({
-                data: newBadges
-            });
-            console.log(`User ${user.username} dapet ${newBadges.length} badge baru!`);
-            return newBadges; // Balikin data badge baru buat notif (opsional)
+            await prisma.badge.createMany({ data: newBadges });
+            console.log(`User ${user.username} naik pangkat! Dapet: ${newBadges.map(b => b.name).join(', ')}`);
+            return newBadges;
         }
 
         return [];

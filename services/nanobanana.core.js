@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 
 // --- KONFIGURASI GLOBAL NANO BANANA ---
-const API_KEY = process.env.NANOBANANA_API_KEY; 
+const API_KEY = process.env.NANOBANANA_API_KEY;
 const BASE_URL = 'https://api.nanobananaapi.ai/api/v1/nanobanana';
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -18,7 +18,7 @@ export const callNanoBanana = async (payload) => {
   try {
     // 1. Hit Endpoint Generate
     console.log(`🍌 [Core] Sending Request... Type: ${payload.type}`);
-    
+
     const generateResponse = await fetch(`${BASE_URL}/generate`, {
       method: 'POST',
       headers: {
@@ -55,28 +55,28 @@ export const callNanoBanana = async (payload) => {
 
       const statusResult = await statusResponse.json();
       const statusData = statusResult.data || {};
-      const successFlag = statusData.successFlag; 
+      const successFlag = statusData.successFlag;
 
       // --- SUKSES ---
       if (successFlag === 1) {
         console.log('🍌 [Core] Success! Downloading image...');
-        
+
         // Ambil URL gambar (Handle berbagai kemungkinan path response)
         const imageUrl = statusData.resultImageUrl || statusData.url || statusData.response?.resultImageUrl;
 
         if (!imageUrl) {
-             throw new Error(`URL Gambar kosong padahal status sukses. Data: ${JSON.stringify(statusData)}`);
+          throw new Error(`URL Gambar kosong padahal status sukses. Data: ${JSON.stringify(statusData)}`);
         }
 
         // Download & Convert ke Base64
         const imageBuffer = await fetch(imageUrl).then(res => res.buffer());
         return imageBuffer.toString('base64');
-      } 
+      }
       // --- GAGAL ---
       else if (successFlag === 2 || successFlag === 3) {
         throw new Error(`Generation Failed: ${statusData.errorMessage || 'Unknown Status Error'}`);
       }
-      
+
       // Tunggu 3 detik sebelum cek lagi
       await delay(3000);
     }
@@ -85,6 +85,6 @@ export const callNanoBanana = async (payload) => {
 
   } catch (error) {
     // Re-throw error biar ditangkep sama Service di atasnya
-    throw error; 
+    throw error;
   }
 };

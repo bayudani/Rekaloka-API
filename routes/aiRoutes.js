@@ -4,7 +4,7 @@ import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Base path: /api/v1/ai
+// Base path: /api/ai
 
 // dokumentasi swagger
 

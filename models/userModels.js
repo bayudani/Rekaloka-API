@@ -32,6 +32,17 @@ export const verifyUser = async (email) => {
     });
 };
 
+// updateVerificationCode
+export const updateVerificationCode = async (email, code) => {
+    return await prisma.user.update({
+        where: { email },
+        data: {
+            verification_code: code
+
+        }
+    });
+};
+
 // find user login
 export const findUserForLogin = async (email) => {
     return await prisma.user.findUnique({
@@ -107,7 +118,7 @@ export const updateUserProfile = async (userId, data) => {
     return await prisma.user.update({
         where: { id: userId },
         data: data,
-        select: { 
+        select: {
             id: true,
             username: true,
             email: true

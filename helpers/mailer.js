@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer';
 
 // --- Konfigurasi Nodemailer ---
-// (Pastikan lo setting .env-nya)
 const transporter = nodemailer.createTransport({
     host: process.env.MAIL_HOST,
     port: process.env.MAIL_PORT,
@@ -23,11 +22,11 @@ export const sendVerificationEmail = async (to, username, code) => {
     const mailOptions = {
         from: `"Rekaloka Team" <${process.env.MAIL_USER}>`,
         to: to,
-        subject: 'Kode Verifikasi Akun Rekaloka Lo',
+        subject: 'Kode Verifikasi Akun Rekaloka kamu',
         html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
         <h2>Halo, ${username}!</h2>
-        <p>Terimakasih udah daftar di Rekaloka. Ini kode verifikasi anda:</p>
+        <p>Terimakasih udah daftar di Rekaloka. Ini kode verifikasi kamu:</p>
         <h1 style="font-size: 3rem; letter-spacing: 0.5rem; margin: 2rem 0; text-align: center;">
           ${code}
         </h1>

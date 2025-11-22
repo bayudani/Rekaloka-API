@@ -4,7 +4,7 @@ import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Base path: /api/v1/game
+// Base path: /api/game
 
 // POST /check-in
 router.post('/check-in', verifyToken, checkInLocation);

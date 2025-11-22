@@ -24,15 +24,19 @@ export const getLeaderboard = async (req, res) => {
             ...user
         }));
 
-        // Simpan ke Redis Cache selama 10 menit
-        await redis.set(KEY_LEADERBOARD, JSON.stringify(leaderboardWithRank), 'EX', 600);
+        // Simpan ke Redis Cache selama 5 menit
+        await redis.set(KEY_LEADERBOARD, JSON.stringify(leaderboardWithRank), 'EX', 300);
         res.status(200).json({
+            success: true,
             message: 'Leaderboard berhasil diambil',
             data: leaderboardWithRank
         });
 
     } catch (error) {
         console.error('Error get leaderboard:', error);
-        res.status(500).json({ error: 'Gagal mengambil data leaderboard' });
+        res.status(500).json({ 
+            success: false,
+            message: 'Gagal mengambil data leaderboard'
+        });
     }
 };

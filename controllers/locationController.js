@@ -23,7 +23,7 @@ export const detectUserProvince = async (req, res) => {
         const apiResponse = await axios.get(nominatimUrl, {
             timeout: 5000,
             headers: {
-                'User-Agent': 'Rekaloka-App/1.0 (contact@rekaloka.id)',
+                'User-Agent': 'Rekaloka-App/1.0 (santara.rekaloka@gmail.com)',
                 'Accept-Language': 'id-ID'
             }
         });
@@ -33,7 +33,8 @@ export const detectUserProvince = async (req, res) => {
 
         if (!address || !address.state) {
             return res.status(404).json({
-                message: "Lokasi antah berantah. Gak kedeteksi provinsinya.",
+                found: false,
+                message: "Lokasi tidak ditemukan.",
                 detected: null
             });
         }
@@ -47,7 +48,7 @@ export const detectUserProvince = async (req, res) => {
             .replace(/DKI/i, '')
             .trim();
 
-        // 5. Cari di Database kita (Rekaloka DB)
+        // 5. Cari di Database (Rekaloka DB)
         const matchedProvince = await prisma.province.findFirst({
             where: {
                 name: {
@@ -84,11 +85,10 @@ export const detectUserProvince = async (req, res) => {
 
         // --- SAFETY NET BUAT LOMBA ---
         // Kalau error koneksi (ENOTFOUND) atau Timeout, kita Pura-pura Sukses (Mocking)
-        // Biar pas demo gak malu-maluin kalau WiFi venue bapuk.
         if (error.code === 'ENOTFOUND' || error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED') {
             console.log("⚠️ Internet Mati/API Down. Switch ke MODE DEMO (Mock Data).");
 
-            // Kita cari aja provinsi default di DB (Misal: ID 1 atau yang pertama ketemu)
+            //  cari aja provinsi default di DB (Misal: ID 1 atau yang pertama ketemu)
             const fallbackProvince = await prisma.province.findFirst({
                 include: { _count: { select: { hotspots: true } } }
             });

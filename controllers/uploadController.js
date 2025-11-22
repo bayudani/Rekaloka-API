@@ -16,7 +16,7 @@ export const uploadImage = async (req, res) => {
 
         res.json({
             message: 'Upload berhasil',
-            url: secureUrl // Ini yang diambil Frontend
+            url: secureUrl
         });
 
     } catch (error) {
