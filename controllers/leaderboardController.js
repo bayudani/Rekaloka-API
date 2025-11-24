@@ -10,7 +10,10 @@ export const getLeaderboard = async (req, res) => {
         const cachedData = await redis.get(KEY_LEADERBOARD);
         if (cachedData) {
             console.log("Menggunakan data dari Redis Cache");
-            return res.json(JSON.parse(cachedData));
+            return res.json({
+                message: "Data berhasil diambil",
+                data: JSON.parse(cachedData)
+            });
         }
         // Default ambil 10 besar
         const limit = parseInt(req.query.limit) || 10;
@@ -34,7 +37,7 @@ export const getLeaderboard = async (req, res) => {
 
     } catch (error) {
         console.error('Error get leaderboard:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             success: false,
             message: 'Gagal mengambil data leaderboard'
         });

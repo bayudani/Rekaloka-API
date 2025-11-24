@@ -16,12 +16,12 @@ model User {
   password      String // Ingat untuk di-hash!
   role           String       @default("user")
   verification_code Int?       
-  is_verify         Boolean       @default(false) // Status verifikasi
+  is_verify         Boolean       @default(false) 
   exp           Int           @default(0)
   level Int @default(1)
   createdAt     DateTime      @default(now())
   
-  // Relasi: Satu user bisa punya banyak check-in dan prompt history
+  // Relasi: Satu user bisa punya banyak check-in
   checkIns      GameCheckin[]
   badges        Badge[]       // Relasi ke Badge
 }
@@ -42,12 +42,23 @@ model Province {
   id           String   @id @default(cuid())
   name         String   @unique // Misal: "Jawa Barat"
   description  String   @db.Text
+  capital_city String?
   backsoundUrl String?
   logoUrl        String?
   backgroundUrl  String?
-  // Menyimpan data ikonik (rumah adat, tarian, dll) sebagai JSON
-  iconicInfoJson String? @db.Text 
-  
+
+  traditionalHouse       String? @db.Text // Rumah Adat
+  districts              String? @db.Text // List Kabupaten (bisa dipisah koma)
+  monuments              String? @db.Text // Monument
+  traditionalWeapons     String? @db.Text // Senjata Adat
+  traditionalInstruments String? @db.Text // Alat Musik
+  traditionalDances      String? @db.Text // Tarian
+  languages              String? @db.Text // Bahasa
+  traditionalFood        String? @db.Text // Makanan Khas
+  folklore               String? @db.Text // Cerita Rakyat
+  traditionalClothes     String? @db.Text // Pakaian Adat
+  traditionalSongs       String? @db.Text // Lagu Daerah
+
   latitude       Float?            // Koordinat Ibu Kota Provinsi
   longitude      Float?   
 
@@ -72,7 +83,7 @@ model CulturalHotspot {
   checkIns    GameCheckin[]
 }
 
-// Model untuk Game Check-in (Fitur Game Adaptif)
+// Model untuk Game Check-in
 model GameCheckin {
   id          String   @id @default(cuid())
   imageUrl    String   // URL foto bukti check-in

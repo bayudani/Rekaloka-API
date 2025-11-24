@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekaloka UI Concept</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        /* Mobile Frame */
+        .mobile-frame {
+            width: 375px;
+            height: 812px;
+            background: #fff;
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 8px solid #333;
+        }
+
+        /* Screen Container */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.4s ease-in-out;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hidden-screen {
+            transform: translateX(100%);
+        }
+
+        .active-screen {
+            transform: translateX(0);
+        }
+
+        .exit-screen {
+            transform: translateX(-100%);
+        }
+
+        /* Radar Animation */
+        .radar-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid rgba(245, 158, 11, 0.5); /* Amber-500 */
+            border-radius: 50%;
+            animation: ripple 2s infinite;
+        }
+        .radar-1 { width: 100px; height: 100px; animation-delay: 0s; }
+        .radar-2 { width: 100px; height: 100px; animation-delay: 0.5s; }
+        .radar-3 { width: 100px; height: 100px; animation-delay: 1s; }
+
+        @keyframes ripple {
+            0% { width: 50px; height: 50px; opacity: 1; border-width: 4px; }
+            100% { width: 300px; height: 300px; opacity: 0; border-width: 0px; }
+        }
+
+        /* Scanning Animation */
+        .scan-line {
+            width: 100%;
+            height: 4px;
+            background: #10b981; /* Emerald-500 */
+            box-shadow: 0 0 15px #10b981, 0 0 30px #10b981;
+            position: absolute;
+            top: 0;
+            animation: scan 2s infinite linear;
+        }
+
+        @keyframes scan {
+            0% { top: 0; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* Confetti/Particles */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #fcd34d;
+            animation: fall 3s linear infinite;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(800px) rotate(360deg); opacity: 0; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="mobile-frame bg-gray-50">
+        
+        <!-- STATUS BAR (Fake) -->
+        <div class="absolute top-0 w-full h-12 px-6 flex justify-between items-center z-50 text-white mix-blend-difference">
+            <span class="font-bold text-sm">9:41</span>
+            <div class="flex gap-2">
+                <i class="fas fa-signal text-xs"></i>
+                <i class="fas fa-wifi text-xs"></i>
+                <i class="fas fa-battery-full text-xs"></i>
+            </div>
+        </div>
+
+        <!-- ================= SCREEN 1: THE QUEST (Check-in) ================= -->
+        <div id="screen1" class="screen active-screen bg-gray-50">
+            <!-- Header Image -->
+            <div class="h-2/5 relative">
+                <img src="https://images.unsplash.com/photo-1627894424467-7970a9920db9?q=80&w=1000&auto=format&fit=crop" class="w-full h-full object-cover rounded-b-[40px] shadow-2xl" alt="Borobudur">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-b-[40px]"></div>
+                <div class="absolute bottom-6 left-6 text-white">
+                    <div class="bg-amber-500 text-xs font-bold px-2 py-1 rounded inline-block mb-2">CULTURAL SPOT</div>
+                    <h1 class="text-3xl font-bold mb-1">Candi Borobudur</h1>
+                    <p class="text-sm opacity-90"><i class="fas fa-map-marker-alt mr-1"></i> Magelang, Jawa Tengah</p>
+                </div>
+            </div>
+
+            <!-- Radar Area -->
+            <div class="flex-1 relative flex flex-col items-center justify-center">
+                <!-- Radar Animation -->
+                <div class="radar-circle radar-1"></div>
+                <div class="radar-circle radar-2"></div>
+                <div class="radar-circle radar-3"></div>
+                
+                <div class="bg-white p-4 rounded-full shadow-xl z-10 relative border-4 border-amber-100">
+                    <i class="fas fa-street-view text-4xl text-amber-600"></i>
+                </div>
+
+                <div class="mt-8 text-center z-10">
+                    <p class="text-gray-400 text-xs uppercase tracking-widest font-bold">JARAK KE LOKASI</p>
+                    <h2 class="text-4xl font-extrabold text-gray-800 mt-1">45<span class="text-lg text-gray-500 ml-1">m</span></h2>
+                    <div class="mt-2 px-4 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold inline-block">
+                        <i class="fas fa-check-circle mr-1"></i> Dalam Jangkauan
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Action -->
+            <div class="p-6 bg-white pb-10">
+                <button onclick="goToScan()" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-gray-400/50 hover:scale-[1.02] transition-transform flex items-center justify-center gap-3">
+                    <i class="fas fa-camera"></i> Scan Lokasi
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= SCREEN 2: THE ANALYSIS (AI Scan) ================= -->
+        <div id="screen2" class="screen hidden-screen bg-gray-900">
+            <div class="relative w-full h-full">
+                <!-- Camera View (Fake) -->
+                <img src="https://images.unsplash.com/photo-1604916906049-70447006bc52?q=80&w=1000&auto=format&fit=crop" class="w-full h-full object-cover opacity-60" alt="Statue">
+                
+                <!-- Scanning Overlay -->
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <!-- Face Box -->
+                    <div class="w-64 h-64 border-2 border-emerald-500/50 relative rounded-lg">
+                        <!-- Corners -->
+                        <div class="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-emerald-400"></div>
+                        <div class="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-emerald-400"></div>
+                        <div class="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-emerald-400"></div>
+                        <div class="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-emerald-400"></div>
+                        
+                        <!-- Laser Line -->
+                        <div class="scan-line"></div>
+                    </div>
+                </div>
+
+                <!-- UI Overlay -->
+                <div class="absolute bottom-0 w-full p-8 bg-gradient-to-t from-black via-black/80 to-transparent text-center">
+                    <div class="mb-6">
+                        <i class="fas fa-robot text-emerald-400 text-3xl mb-3 animate-bounce"></i>
+                        <h2 class="text-white font-bold text-xl">Gemini Vision AI</h2>
+                        <p id="loadingText" class="text-emerald-400 text-sm font-mono mt-2">Menganalisa struktur batuan...</p>
+                    </div>
+                    
+                    <!-- Fake Progress -->
+                    <div class="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden mb-8">
+                        <div class="bg-emerald-500 h-full w-2/3 animate-pulse"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SCREEN 3: THE REWARD (Success) ================= -->
+        <div id="screen3" class="screen hidden-screen bg-white overflow-hidden">
+            <!-- Confetti Container -->
+            <div id="confetti-container" class="absolute inset-0 pointer-events-none"></div>
+
+            <div class="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
+                
+                <!-- Success Badge -->
+                <div class="relative mb-8">
+                    <div class="absolute inset-0 bg-yellow-300 rounded-full blur-2xl opacity-50 animate-pulse"></div>
+                    <img src="https://cdn-icons-png.flaticon.com/512/744/744546.png" class="w-32 h-32 relative z-10 drop-shadow-2xl animate-bounce" alt="Badge">
+                    <div class="absolute -bottom-2 -right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full border-2 border-white">
+                        VERIFIED <i class="fas fa-check"></i>
+                    </div>
+                </div>
+
+                <h1 class="text-3xl font-extrabold text-gray-900 mb-2 text-center">Misi Selesai!</h1>
+                <p class="text-gray-500 text-center mb-8">Gokil! Lo udah resmi menjejakkan kaki di Candi Borobudur.</p>
+
+                <!-- Reward Card -->
+                <div class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-5 shadow-sm mb-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-gray-500 text-xs font-bold uppercase">REWARD DIDAPAT</span>
+                        <span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded font-bold">Level 3</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="bg-amber-500 w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-amber-500/30">
+                            XP
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-800">+100 <span class="text-sm text-gray-500 font-normal">Poin</span></h3>
+                            <p class="text-xs text-gray-400">Total: 4,250 EXP</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Level Bar -->
+                    <div class="mt-4">
+                        <div class="flex justify-between text-xs font-bold text-gray-400 mb-1">
+                            <span>Progress Level</span>
+                            <span>85%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                            <div class="bg-amber-500 h-full w-[85%] rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Badge Unlocked Notification -->
+                <div class="w-full bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex items-center gap-3 animate-pulse">
+                    <i class="fas fa-medal text-indigo-500 text-xl"></i>
+                    <div>
+                        <p class="text-xs text-indigo-400 font-bold">BADGE BARU TERBUKA</p>
+                        <p class="text-indigo-900 font-bold text-sm">Langkah Awal</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="p-6 bg-white pb-10">
+                <button onclick="resetDemo()" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold shadow-lg hover:scale-[1.02] transition-transform">
+                    Lanjut Petualangan <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Simple Logic to Switch Screens
+        function goToScan() {
+            document.getElementById('screen1').classList.add('exit-screen');
+            document.getElementById('screen1').classList.remove('active-screen');
+            
+            document.getElementById('screen2').classList.remove('hidden-screen');
+            document.getElementById('screen2').classList.add('active-screen');
+
+            // Simulate AI Loading Text
+            const texts = [
+                "Mengunggah bukti...",
+                "Menghubungi Satelit AI...",
+                "Gemini menganalisa pixel...",
+                "Mencocokkan database...",
+                "Validasi lokasi GPS..."
+            ];
+            let i = 0;
+            const interval = setInterval(() => {
+                if(i < texts.length) {
+                    document.getElementById('loadingText').innerText = texts[i];
+                    i++;
+                }
+            }, 800);
+
+            // Auto go to success after 4 seconds
+            setTimeout(() => {
+                clearInterval(interval);
+                goToSuccess();
+            }, 4500);
+        }
+
+        function goToSuccess() {
+            document.getElementById('screen2').classList.add('exit-screen');
+            document.getElementById('screen2').classList.remove('active-screen');
+            
+            document.getElementById('screen3').classList.remove('hidden-screen');
+            document.getElementById('screen3').classList.add('active-screen');
+            
+            startConfetti();
+        }
+
+        function resetDemo() {
+            // Reset classes
+            document.getElementById('screen3').classList.add('hidden-screen');
+            document.getElementById('screen3').classList.remove('active-screen');
+            document.getElementById('screen2').classList.add('hidden-screen');
+            document.getElementById('screen2').classList.remove('active-screen', 'exit-screen');
+            document.getElementById('screen1').classList.remove('exit-screen');
+            document.getElementById('screen1').classList.add('active-screen');
+            
+            // Clear confetti
+            document.getElementById('confetti-container').innerHTML = '';
+        }
+
+        function startConfetti() {
+            const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+            const container = document.getElementById('confetti-container');
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                container.appendChild(confetti);
+            }
+        }
+    </script>
+</body>
+</html>

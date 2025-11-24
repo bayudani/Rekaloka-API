@@ -21,15 +21,9 @@ export const findProvinceById = async (id) => {
     const province = await prisma.province.findUnique({
         where: { id: id },
         include: {
-            hotspots: true, // Ambil semua data hotspot yang terkait
+            hotspots: true, 
         },
     });
-
-    // Ubah JSON string jadi objek beneran
-    if (province && province.iconicInfoJson) {
-        province.iconicInfo = JSON.parse(province.iconicInfoJson);
-    }
-
     return province;
 };
 

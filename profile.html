@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekaloka User Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc; /* Slate-50 */
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .mobile-frame {
+            width: 375px;
+            min-height: 100vh; /* Full height for scroll */
+            background: #fff;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            overflow-x: hidden;
+        }
+
+        /* --- BADGE STYLES (Mini Version) --- */
+        .badge-diamond {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            transform: rotate(45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 10px; /* Spacing for rotation */
+            transition: transform 0.2s;
+        }
+        
+        .badge-inner {
+            transform: rotate(-45deg);
+            font-size: 1.2rem;
+        }
+
+        /* Tier Styles */
+        .tier-wood { background: linear-gradient(135deg, #d97706, #92400e); border: 2px solid #78350f; color: #fef3c7; }
+        .tier-silver { background: linear-gradient(135deg, #e2e8f0, #94a3b8); border: 2px solid #64748b; color: #334155; }
+        .tier-gold { background: linear-gradient(135deg, #fcd34d, #b45309); border: 2px solid #fffbeb; color: white; }
+        
+        /* Locked Style */
+        .tier-locked {
+            background: #e2e8f0;
+            border: 2px dashed #cbd5e1;
+            color: #94a3b8;
+            box-shadow: none;
+        }
+
+        .badge-item:active .badge-diamond {
+            transform: rotate(45deg) scale(0.9);
+        }
+
+        /* --- PROGRESS BAR GLOW --- */
+        .progress-glow {
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mobile-frame pb-24">
+        
+        <!-- HEADER / COVER -->
+        <div class="relative h-48 bg-gray-900 rounded-b-[40px] overflow-hidden">
+            <!-- Background Pattern -->
+            <img src="https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover opacity-40 mix-blend-overlay" alt="Batik Pattern">
+            <div class="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900"></div>
+            
+            <!-- Settings Icon -->
+            <div class="absolute top-6 right-6 text-white cursor-pointer hover:opacity-80">
+                <i class="fas fa-cog text-xl"></i>
+            </div>
+        </div>
+
+        <!-- PROFILE INFO (Overlap Header) -->
+        <div class="px-6 -mt-16 relative z-10">
+            
+            <!-- Avatar & Level Badge -->
+            <div class="flex justify-center mb-4">
+                <div class="relative">
+                    <div class="w-28 h-28 rounded-full border-4 border-white shadow-xl overflow-hidden bg-gray-200">
+                        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover" alt="User Avatar">
+                    </div>
+                    <!-- Level Badge Bubble -->
+                    <div class="absolute bottom-0 right-0 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full border-2 border-white shadow-lg flex items-center gap-1">
+                        LV. 12
+                    </div>
+                </div>
+            </div>
+
+            <!-- Name & Title -->
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-extrabold text-gray-900">Sultan Farhan</h1>
+                <p class="text-emerald-600 font-semibold text-sm flex items-center justify-center gap-1">
+                    <i class="fas fa-crown text-xs"></i> Maestro Budaya
+                </p>
+                <p class="text-gray-400 text-xs mt-1">Bergabung sejak Sept 2024</p>
+            </div>
+
+            <!-- EXP PROGRESS BAR (The Hero!) -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                <div class="flex justify-between items-end mb-2">
+                    <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Experience</span>
+                    <span class="text-sm font-bold text-gray-800">2,450 <span class="text-gray-400 text-xs font-normal">/ 5,000 XP</span></span>
+                </div>
+                
+                <!-- The Bar -->
+                <div class="w-full bg-gray-100 h-4 rounded-full overflow-hidden relative">
+                    <!-- Fill -->
+                    <div class="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full progress-glow relative" style="width: 49%;">
+                        <!-- Shine animation -->
+                        <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-50"></div>
+                    </div>
+                </div>
+                <p class="text-[10px] text-gray-400 mt-2 text-right">2,550 XP lagi menuju Level 13 🚀</p>
+            </div>
+
+            <!-- STATS ROW -->
+            <div class="grid grid-cols-3 gap-3 mb-8">
+                <div class="bg-blue-50 p-3 rounded-2xl text-center border border-blue-100">
+                    <h3 class="text-xl font-bold text-blue-600">42</h3>
+                    <p class="text-[10px] font-bold text-blue-400 uppercase">Check-in</p>
+                </div>
+                <div class="bg-emerald-50 p-3 rounded-2xl text-center border border-emerald-100">
+                    <h3 class="text-xl font-bold text-emerald-600">8</h3>
+                    <p class="text-[10px] font-bold text-emerald-400 uppercase">Badges</p>
+                </div>
+                <div class="bg-purple-50 p-3 rounded-2xl text-center border border-purple-100">
+                    <h3 class="text-xl font-bold text-purple-600">#15</h3>
+                    <p class="text-[10px] font-bold text-purple-400 uppercase">Rank</p>
+                </div>
+            </div>
+
+            <!-- BADGE COLLECTION -->
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-gray-800">Koleksi Lencana</h3>
+                    <a href="#" class="text-xs text-emerald-600 font-bold hover:underline">Lihat Semua</a>
+                </div>
+
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+                    <!-- Grid Badge -->
+                    <div class="flex justify-between items-center">
+                        
+                        <!-- Item 1: Unlocked (Wood) -->
+                        <div class="badge-item flex flex-col items-center gap-2">
+                            <div class="badge-diamond tier-wood cursor-pointer">
+                                <div class="badge-inner"><i class="fas fa-camera-retro"></i></div>
+                            </div>
+                            <span class="text-[10px] font-bold text-gray-600">Turis</span>
+                        </div>
+
+                        <!-- Item 2: Unlocked (Silver) -->
+                        <div class="badge-item flex flex-col items-center gap-2">
+                            <div class="badge-diamond tier-silver cursor-pointer">
+                                <div class="badge-inner"><i class="fas fa-compass"></i></div>
+                            </div>
+                            <span class="text-[10px] font-bold text-gray-600">Jelajah</span>
+                        </div>
+
+                        <!-- Item 3: Unlocked (Gold) -->
+                        <div class="badge-item flex flex-col items-center gap-2">
+                            <div class="badge-diamond tier-gold cursor-pointer">
+                                <div class="badge-inner"><i class="fas fa-scroll"></i></div>
+                            </div>
+                            <span class="text-[10px] font-bold text-gray-600">Pakar</span>
+                        </div>
+
+                        <!-- Item 4: LOCKED (Gray) -->
+                        <div class="badge-item flex flex-col items-center gap-2 opacity-60">
+                            <div class="badge-diamond tier-locked">
+                                <div class="badge-inner"><i class="fas fa-lock"></i></div>
+                            </div>
+                            <span class="text-[10px] font-bold text-gray-400">Maestro</span>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- HISTORY LIST -->
+            <div class="mb-24">
+                <h3 class="font-bold text-gray-800 mb-4">Riwayat Perjalanan</h3>
+                
+                <div class="space-y-3">
+                    <!-- Item History -->
+                    <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
+                        <img src="https://images.unsplash.com/photo-1627894424467-7970a9920db9?q=80&w=200&auto=format&fit=crop" class="w-12 h-12 rounded-xl object-cover" alt="Loc">
+                        <div class="flex-1">
+                            <h4 class="text-sm font-bold text-gray-800">Candi Borobudur</h4>
+                            <p class="text-xs text-gray-400">2 jam yang lalu • +100 XP</p>
+                        </div>
+                        <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                            <i class="fas fa-check text-xs"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
+                        <img src="https://images.unsplash.com/photo-1555852095-64e7428df0fa?q=80&w=200&auto=format&fit=crop" class="w-12 h-12 rounded-xl object-cover" alt="Loc">
+                        <div class="flex-1">
+                            <h4 class="text-sm font-bold text-gray-800">Gedung Sate</h4>
+                            <p class="text-xs text-gray-400">Kemarin • +150 XP</p>
+                        </div>
+                        <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                            <i class="fas fa-check text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- BOTTOM NAV (Dummy) -->
+        <div class="fixed bottom-0 w-full max-w-[375px] bg-white border-t border-gray-200 px-6 py-4 flex justify-between items-center z-50 rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+            <i class="fas fa-home text-gray-400 text-xl"></i>
+            <i class="fas fa-map-marked-alt text-gray-400 text-xl"></i>
+            <div class="bg-gray-900 text-white w-12 h-12 rounded-full flex items-center justify-center -mt-8 shadow-lg shadow-gray-900/30 border-4 border-white">
+                <i class="fas fa-camera"></i>
+            </div>
+            <i class="fas fa-trophy text-gray-400 text-xl"></i>
+            <i class="fas fa-user text-emerald-600 text-xl"></i>
+        </div>
+
+    </div>
+
+</body>
+</html>

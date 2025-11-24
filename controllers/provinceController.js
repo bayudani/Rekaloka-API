@@ -33,28 +33,32 @@ export const getProvinces = async (req, res) => {
             await redis.set(KEY_ALL_PROVINCES, JSON.stringify(provincesData), 'EX', 3600);
         }
 
-        // 2. LOGIKA LBS (Sorting Jarak)
-        // Kalo user ngirim lat & long,  urutin datanya sebelum dikirim
+        let result = provincesData;
+
         if (lat && long) {
             const userLat = parseFloat(lat);
             const userLong = parseFloat(long);
 
-            const sortedProvinces = provincesData.map(prov => {
-                // Kalo provinsi belum punya koordinat di DB, anggep jauh (taruh paling bawah)
-                if (!prov.latitude || !prov.longitude) {
-                    return { ...prov, distance: 999999999 };
+            result = provincesData.map(prov => {
+                let dist = 999999999; // Default jauh banget
+                if (prov.latitude && prov.longitude) {
+                    dist = calculateDistance(userLat, userLong, prov.latitude, prov.longitude);
                 }
-
-                // Hitung jarak pake rumus Haversine (helpers/geo.js)
-                const dist = calculateDistance(userLat, userLong, prov.latitude, prov.longitude);
-                return { ...prov, distance: Math.round(dist) }; // Tambahin field 'distance' (meter)
-            }).sort((a, b) => a.distance - b.distance); // Urutin Ascending (Terdekat ke Terjauh)
-
-            return res.json(sortedProvinces);
+                return { ...prov, distance: Math.round(dist) };
+            }).sort((a, b) => a.distance - b.distance);
         }
 
-        // 3. Kalo gak ada query LBS, balikin data default
-        res.json(provincesData);
+        // 🔥 CLEANING RESPONSE: Hapus field yang gak perlu (Lat/Long)
+        // Biar sesuai request: "Tampilkan nama, logo, ibu_kota aja"
+        const liteResponse = result.map(p => ({
+            id: p.id,
+            name: p.name,
+            capital: p.capital_city, // Ibu Kota
+            logoUrl: p.logoUrl,
+            distance: p.distance // Tetep kasih jarak kalo ada, biar user tau
+        }));
+
+        res.json(liteResponse);
 
     } catch (error) {
         res.status(500).json({ message: 'Gagal mengambil data provinsi', details: error.message });
@@ -91,54 +95,62 @@ export const getProvinceById = async (req, res) => {
 // POST /api//provinces
 export const createNewProvince = async (req, res) => {
     const {
-        name, 
-        description,
-        backsoundBase64,
-        iconicInfoJson,
-        logoBase64,
-        backgroundBase64,
-        latitude,
-        longitude
+        name, description,
+        backsoundBase64, logoBase64, backgroundBase64,
+        latitude, longitude,
+        // Field Budaya Baru (Nullable)
+        traditionalHouse, districts, monuments, traditionalWeapons,
+        traditionalInstruments, traditionalDances, languages,
+        traditionalFood, folklore, traditionalClothes, traditionalSongs
     } = req.body;
 
     if (!name || !description) {
-        return res.status(400).json({ message: 'Nama dan deskripsi provinsi tidak boleh kosong' });
+        return res.status(400).json({ error: 'Nama dan deskripsi provinsi tidak boleh kosong' });
     }
 
     try {
-        const iconicInfoString = typeof iconicInfoJson === 'object'
-            ? JSON.stringify(iconicInfoJson)
-            : iconicInfoJson;
-
-        // Upload Logo ke Cloudinary
+        // 1. Upload Assets ke Cloudinary (Parallel biar cepet bisa, tapi serial aman)
         let logoUrl = null;
         if (logoBase64) {
             logoUrl = await uploadToCloudinary(logoBase64, 'rekaloka_provinces/logos');
         }
 
-        // Upload Background ke Cloudinary
         let backgroundUrl = null;
         if (backgroundBase64) {
             backgroundUrl = await uploadToCloudinary(backgroundBase64, 'rekaloka_provinces/backgrounds');
         }
 
-        // audio
         let finalBacksoundUrl = null;
         if (backsoundBase64) {
             finalBacksoundUrl = await uploadAudioToCloudinary(backsoundBase64, 'rekaloka_provinces/audio');
         }
 
+        // 2. Create Data ke Database
+        // Field yang undefined/null akan diabaikan atau diset null oleh Prisma
         const newProvince = await createProvince({
             name,
             description,
             backsoundUrl: finalBacksoundUrl,
-            iconicInfoJson: iconicInfoString,
             logoUrl,
             backgroundUrl,
             latitude: latitude ? parseFloat(latitude) : null,
-            longitude: longitude ? parseFloat(longitude) : null
+            longitude: longitude ? parseFloat(longitude) : null,
+
+            // Masukin data budaya mentah-mentah
+            traditionalHouse,
+            districts,
+            monuments,
+            traditionalWeapons,
+            traditionalInstruments,
+            traditionalDances,
+            languages,
+            traditionalFood,
+            folklore,
+            traditionalClothes,
+            traditionalSongs
         });
 
+        // 3. Hapus Cache Lama
         await redis.del(KEY_ALL_PROVINCES);
 
         res.status(201).json({ message: 'Provinsi baru berhasil dibuat', data: newProvince });
@@ -147,7 +159,7 @@ export const createNewProvince = async (req, res) => {
             return res.status(409).json({ error: 'Nama provinsi sudah ada' });
         }
         console.error('Error create province:', error);
-        res.status(500).json({ message: 'Gagal membuat provinsi', details: error.message });
+        res.status(500).json({ error: 'Gagal membuat provinsi', details: error.message });
     }
 };
 

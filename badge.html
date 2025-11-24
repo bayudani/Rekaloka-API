@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekaloka Badge Concepts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #111827; /* Dark Mode Background */
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* --- BASE BADGE SHAPE --- */
+        .badge-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 24px; /* Rounded Square / Squircle */
+            transform: rotate(45deg); /* Diamond Shape Base */
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        .badge-inner {
+            transform: rotate(-45deg); /* Counter rotate content */
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- TIER 1: TURIS BIASA (Wood/Bronze Style) --- */
+        .badge-wood {
+            background: linear-gradient(135deg, #d97706, #92400e);
+            border: 4px solid #78350f;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.3), 0 10px 20px rgba(0,0,0,0.5);
+        }
+        .badge-wood i {
+            color: #fef3c7;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* --- TIER 2: PENJELAJAH BUDAYA (Silver/Steel Style) --- */
+        .badge-silver {
+            background: linear-gradient(135deg, #e2e8f0, #94a3b8);
+            border: 4px solid #64748b;
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.5), 0 10px 20px rgba(0,0,0,0.5);
+        }
+        .badge-silver i {
+            color: #334155;
+            text-shadow: 0 1px 1px rgba(255,255,255,0.8);
+        }
+
+        /* --- TIER 3: PAKAR WARISAN (Gold Style) --- */
+        .badge-gold {
+            background: linear-gradient(135deg, #fcd34d, #b45309);
+            border: 4px solid #fffbeb;
+            box-shadow: 0 0 25px rgba(251, 191, 36, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        /* Shine Effect */
+        .badge-gold::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(to bottom right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 100%);
+            transform: rotate(30deg);
+            animation: shine 3s infinite;
+        }
+        .badge-gold i {
+            color: #fff;
+            drop-shadow: 0 2px 4px rgba(180, 83, 9, 0.8);
+        }
+
+        /* --- TIER 4: MAESTRO BUDAYA (Holographic/Diamond Style) --- */
+        .badge-maestro {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899, #3b82f6);
+            background-size: 200% 200%;
+            border: 4px solid #fff;
+            animation: gradientBG 3s ease infinite;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
+        }
+        .badge-maestro i {
+            color: white;
+            filter: drop-shadow(0 0 5px rgba(255,255,255,0.8));
+        }
+
+        /* --- LOCKED STATE --- */
+        .badge-locked {
+            background: #374151;
+            border: 4px dashed #4b5563;
+            opacity: 0.7;
+        }
+        .badge-locked i {
+            color: #9ca3af;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(30deg); }
+            20% { transform: translateX(100%) rotate(30deg); }
+            100% { transform: translateX(100%) rotate(30deg); }
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .hover-scale:hover .badge-container {
+            transform: rotate(45deg) scale(1.1);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="w-full max-w-4xl">
+        <h1 class="text-3xl font-bold text-white text-center mb-2">Kasta Tertinggi Rekaloka 🏆</h1>
+        <p class="text-gray-400 text-center mb-12 text-sm">Dari Turis Nyasar sampai jadi Legenda Lokal</p>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 justify-items-center">
+
+            <!-- LEVEL 1 -->
+            <div class="flex flex-col items-center gap-4 hover-scale cursor-pointer group">
+                <div class="badge-container badge-wood">
+                    <div class="badge-inner">
+                        <i class="fas fa-camera-retro text-4xl mb-1"></i>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-amber-500 font-bold text-lg">Turis Biasa</h3>
+                    <p class="text-gray-500 text-xs">Level 1 • Start</p>
+                </div>
+            </div>
+
+            <!-- LEVEL 2 -->
+            <div class="flex flex-col items-center gap-4 hover-scale cursor-pointer group">
+                <div class="badge-container badge-silver">
+                    <div class="badge-inner">
+                        <i class="fas fa-compass text-4xl mb-1"></i>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-slate-300 font-bold text-lg">Penjelajah</h3>
+                    <p class="text-gray-500 text-xs">Level 5 • Check-in 5x</p>
+                </div>
+            </div>
+
+            <!-- LEVEL 3 -->
+            <div class="flex flex-col items-center gap-4 hover-scale cursor-pointer group">
+                <div class="badge-container badge-gold">
+                    <div class="badge-inner">
+                        <i class="fas fa-scroll text-4xl mb-1"></i>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-yellow-400 font-bold text-lg">Pakar Warisan</h3>
+                    <p class="text-gray-500 text-xs">Level 10 • Expert</p>
+                </div>
+            </div>
+
+            <!-- LEVEL 4 (MAX) -->
+            <div class="flex flex-col items-center gap-4 hover-scale cursor-pointer group">
+                <div class="badge-container badge-maestro relative">
+                    <!-- Sparkles -->
+                    <div class="absolute -top-2 -right-2 text-yellow-300 animate-ping">✨</div>
+                    <div class="badge-inner">
+                        <i class="fas fa-crown text-4xl mb-1"></i>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-extrabold text-lg">Maestro Budaya</h3>
+                    <p class="text-gray-500 text-xs">Max Level • LEGEND</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- LOCKED EXAMPLE -->
+        <div class="mt-16 border-t border-gray-800 pt-8 text-center">
+            <p class="text-gray-500 text-xs mb-4 uppercase tracking-widest">Preview Tampilan Terkunci (Locked)</p>
+            
+            <div class="flex justify-center gap-8 opacity-50">
+                <div class="flex flex-col items-center gap-3 grayscale">
+                    <div class="badge-container badge-locked">
+                        <div class="badge-inner">
+                            <i class="fas fa-lock text-3xl"></i>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <h3 class="text-gray-500 font-bold text-sm">???</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
